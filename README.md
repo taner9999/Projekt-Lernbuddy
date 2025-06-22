@@ -52,7 +52,7 @@ Mit einem modernen Design, intuitiver Bedienung und leistungsstarker KI (GPT) hi
 ### 🔧 Voraussetzungen
 
 - Python 3.8 oder neuer  
-- OpenAI API-Key: https://platform.openai.com/account/api-keys
+- OpenAI API-Key: "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"
 
 ---
 
@@ -76,7 +76,7 @@ pip install -r requirements.txt
 pip install streamlit openai pandas fpdf ics streamlit-lottie requests
 
 # 4. API-Key in lernbuddy_deluxe.py einfügen:
-# openai.api_key = "DEIN_API_KEY"
+# openai.api_key = "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"
 
 # 5. App starten
 streamlit run lernbuddy_deluxe.py
