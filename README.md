@@ -1,55 +1,35 @@
-# 📚 Lernbuddy – Dein persönlicher Lern-Chatbot
+# 🎓 Lernbuddy Deluxe
 
-Willkommen bei **Lernbuddy**, deinem digitalen Studienbegleiter! 🎓  
-Dieses Projekt ist Teil meines Uni-Kurses „KI praktisch anwenden“ an der Hochschule Kempten.
+Willkommen bei **Lernbuddy Deluxe** – deinem smarten Studienassistenten für Prüfungen, Lernpläne, GPT-Chat und Hochschulinfos!  
+Entwickelt mit ❤️ von **Taner Altin** & **Shefki Kuleta**.
 
----
-
-## 💡 Idee
-
-**Lernbuddy** hilft Studierenden dabei, ihren Lernfortschritt festzuhalten und regelmäßig zu reflektieren.  
-Die Anwendung fragt täglich:  
-👉 *„Was hast du heute gelernt?“*  
-…und verwandelt alte Einträge nach 3 Tagen in kleine Quizfragen.
+![Preview](A_screenshot_of_"Lernbuddy_Deluxe,"_an_educational.png)
 
 ---
 
-## 🖥️ Funktionen
+## 🚀 Features
 
-✅ Neue Lerneinträge speichern  
-✅ Quiz-Modus zur Wiederholung älterer Einträge  
-✅ Alle Einträge chronologisch ansehen  
-✅ Klar strukturiertes und schönes UI mit **Streamlit**
-
----
-
-## 🛠️ Technologien
-
-| Komponente     | Beschreibung                |
-|----------------|-----------------------------|
-| `Python 3`     | Hauptsprache                |
-| `Streamlit`    | Web-Oberfläche              |
-| `JSON`         | Datenspeicherung lokal      |
-| 📁 Datei: `lerntagebuch.json` – speichert alle Lerneinträge
+- 💬 **GPT-Chat** – Stelle Fragen, erhalte Zusammenfassungen oder lass dir Inhalte erklären.
+- 🧠 **Lernplaner** – Erstelle personalisierte Lernpläne nach Datum & Schwierigkeit.
+- 📤 **Export-Funktionen** – Lernplan als PDF oder ICS-Kalender speichern.
+- 🔎 **Suche** – Durchsuche deine Lernpläne nach Fächern.
+- 🎨 **Darkmode & Farbthemen** – Wähle zwischen hell/dunkel und Hochschulfarben.
+- 🎓 **Kempten-Infos** – Direktlinks zu Mensa, Moodle, Bibliothek & mehr.
 
 ---
 
-## ▶️ Demo-Screenshots
+## 🖥️ Vorschau
 
-### 🎓 Eintrag speichern
-![Eintrag speichern](screenshots/eintrag_speichern.png)
-
-### 🧠 Quiz-Funktion
-![Quiz](screenshots/quiz_modus.png)
-
-### 📋 Alle Einträge
-![Alle Einträge](screenshots/alle_eintraege.png)
+| Startseite | Lernplan | Suche |
+|-----------|----------|-------|
+| ![Start](preview1.png) | ![Plan](preview2.png) | ![Suche](preview3.png) |
 
 ---
 
-## 🚀 Ausführen
+## 🛠️ Installation
 
-1. Python & Streamlit installieren (einmalig):
+### 1. Klone das Repository
 
 ```bash
-pip install streamlit
+git clone https://github.com/deinname/lernbuddy-deluxe.git
+cd lernbuddy-deluxe
