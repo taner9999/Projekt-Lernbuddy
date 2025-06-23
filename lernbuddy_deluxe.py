@@ -217,3 +217,62 @@ st.markdown("""
 - [🧾 MeinCampus](https://campus.hs-kempten.de/)
 """)
 
+import re
+def parse_gpt_plan(plan_text):
+    data = []
+    current_day = None
+    date_pattern = re.compile(r"^([A-Za-zäöüÄÖÜß]+), (\d{2}\.\d{2}\.\d{4})$")
+    session_pattern = re.compile(r"(\d{2}:\d{2})–(\d{2}:\d{2}): (.+)")
+
+    lines = plan_text.splitlines()
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("Prüfung") or "Pause" in line:
+            continue
+        date_match = date_pattern.match(line)
+        if date_match:
+            current_day = {"Wochentag": date_match.group(1), "Datum": date_match.group(2)}
+        elif session_pattern.match(line) and current_day:
+            start, end, fach = session_pattern.findall(line)[0]
+            data.append({
+                "Wochentag": current_day["Wochentag"],
+                "Datum": current_day["Datum"],
+                "Fach": fach,
+                "Startzeit": start,
+                "Endzeit": end,
+                "Dauer": "45 Min"
+            })
+    return pd.DataFrame(data)
+
+df_gpt = parse_gpt_plan(result)
+if df_gpt.empty:
+    st.warning("⚠️ GPT-Plan konnte nicht in eine Tabelle umgewandelt werden.")
+else:
+    st.markdown("### 🧠 GPT-Plan als Tabelle:")
+    st.dataframe(df_gpt)
+
+    import openpyxl
+    from openpyxl.styles import Font
+    from openpyxl.utils.dataframe import dataframe_to_rows
+
+    def export_excel_formatted(df, filename="gpt_plan.xlsx"):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "GPT-Lernplan"
+
+        for i, row in enumerate(dataframe_to_rows(df, index=False, header=True), 1):
+            ws.append(row)
+            if i == 1:
+                for cell in ws[i]:
+                    cell.font = Font(bold=True)
+
+        for col in ws.columns:
+            max_len = max(len(str(c.value)) if c.value else 0 for c in col)
+            ws.column_dimensions[col[0].column_letter].width = max_len + 2
+
+        wb.save(filename)
+        with open(filename, "rb") as f:
+            st.download_button("📥 GPT-Plan als Excel herunterladen", f, file_name=filename)
+
+    export_excel_formatted(df_gpt)
+
