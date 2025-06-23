@@ -448,13 +448,30 @@ elif menu == "🎓 Hochschule":
             st.success("🔒 Simulierter Login erfolgreich")
 
     # Tab 5: Campus-Karte
-    with tabs[4]:
-        st.subheader("🗺️ Campus-Karte")
+   with tabs[4]:
+    st.subheader("🗺️ Campus-Karte")
 
-        hs_lat = 47.72562
-        hs_lon = 10.31459
-        df_map = pd.DataFrame({"lat": [hs_lat], "lon": [hs_lon]})
-        st.map(df_map, zoom=17)
+    # Interaktive Karte (zentriert auf Hochschule Kempten)
+    df_map = pd.DataFrame({
+        "lat": [47.72585],
+        "lon": [10.31390]
+    })
+    st.map(df_map, zoom=18)
+
+    # Trennlinie
+    st.markdown("---")
+
+    # Campus-Lageplan als Bild
+    st.markdown("### 🗺️ Gebäudeübersicht (PDF-Plan)")
+    st.image("https://www.hs-kempten.de/fileadmin/user_upload/Bilder_Campus/Campus_Plan2023.jpg", use_column_width=True)
+    st.caption("Quelle: Hochschule Kempten")
+
+    # Optionaler PDF-Download
+    st.download_button(
+        label="📥 Campus-Plan als PDF herunterladen",
+        data=requests.get("https://www.hs-kempten.de/fileadmin/user_upload/Bilder_Campus/Campus_Plan2023.pdf").content,
+        file_name="campus_plan_kempten.pdf"
+    )
 
     st.markdown("---")
     st.info("🌟 Designed by dein Studi-Buddy 🚀")
