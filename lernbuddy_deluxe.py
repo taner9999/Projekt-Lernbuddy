@@ -342,8 +342,6 @@ elif menu == "🔎 Suche":
 # Hochschule
 elif menu == "🎓 Hochschule":
     import pandas as pd
-    import folium
-    from streamlit_folium import folium_static
 
     # --- Header & Animation ---
     st.markdown(
@@ -393,7 +391,7 @@ elif menu == "🎓 Hochschule":
                   onmouseout="this.style.transform='scale(1)';"
                 >
                   <h3 style="margin-bottom:0.5rem;">{label}</h3>
-                  <a href="{url}" target="_blank">{url}</a>
+                  <a href="{url}" target="_blank" style="color:#00CED1;">{url}</a>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -401,8 +399,7 @@ elif menu == "🎓 Hochschule":
     with tabs[1]:
         st.subheader("🍽️ Mensaplan der Woche")
         df = pd.read_html("https://www.stw-swt.de/essen-trinken/speiseplaene/kempten")[0]
-        # Spalten sauber umbenennen (Beispiel)
-        df.columns = ["Wochentag","Mensa A","Mensa B","Bio-Mensa"]
+        df.columns = ["Wochentag", "Mensa A", "Mensa B", "Bio-Mensa"]
         st.dataframe(df.style.set_table_styles(
             [{"selector":"th","props":[("background-color","#00CED1"),("color","white")]}]
         ), height=300)
@@ -415,24 +412,24 @@ elif menu == "🎓 Hochschule":
         - Sa: 10:00–16:00  
         - Buchkatalog: [online suchen](https://opac.hs-kempten.de)  
         """)
-        st.button("PDF-Katalog herunterladen")
+        st.download_button("📄 PDF-Katalog herunterladen", data=b"", file_name="katalog.pdf")
 
-    # 4) Moodle-Anmeldung simulieren
+    # 4) Moodle-Quicklink
     with tabs[3]:
         st.subheader("💻 Moodle-Quicklink")
         username = st.text_input("Benutzername")
         password = st.text_input("Passwort", type="password")
         if st.button("Login"):
-            st.success("🔒 Erfolgreich eingeloggt (Simuliert)")
+            st.success("🔒 Simulierter Login erfolgreich")
 
-    # 5) Interaktive Campus-Karte
+    # 5) Campus-Karte mit st.map
     with tabs[4]:
         st.subheader("🗺️ Campus-Karte")
-        m = folium.Map(location=[47.726, 10.312], zoom_start=16)
-        folium.Marker([47.726,10.312], tooltip="Hochschule Kempten").add_to(m)
-        folium_static(m)
+        df_map = pd.DataFrame({"lat": [47.726], "lon": [10.312]})
+        st.map(df_map, zoom=16)
 
     # --- Footer ---
     st.markdown("---")
-    st.info("Designed by dein Studi-Buddy 🚀")
+    st.info("🌟 Designed by dein Studi-Buddy")
+
 
