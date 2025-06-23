@@ -342,6 +342,15 @@ elif menu == "🔎 Suche":
 # Hochschule
 elif menu == "🎓 Hochschule":
     import pandas as pd
+    import requests
+    from streamlit_lottie import st_lottie
+
+    # Hilfsfunktion: lädt Lottie-Animation aus URL
+    def load_lottie_url(url):
+        r = requests.get(url)
+        if r.status_code != 200:
+            return None
+        return r.json()
 
     # --- Header & Animation ---
     st.markdown(
@@ -354,35 +363,42 @@ elif menu == "🎓 Hochschule":
         """,
         unsafe_allow_html=True
     )
-    show_lottie("https://assets10.lottiefiles.com/packages/lf20_3rwasyjy.json", height=200)
+
+    # Lottie-Animation korrekt laden und anzeigen
+    lottie_json = load_lottie_url("https://assets10.lottiefiles.com/packages/lf20_3rwasyjy.json")
+    if lottie_json:
+        st_lottie(lottie_json, height=200)
+    else:
+        st.error("📌 Konnte Animation nicht laden.")
 
     # --- Kennzahlen ---
-    col1, col2, col3 = st.columns(3)
-    col1.metric("📚 Studiengänge gesamt", "40+")
-    col2.metric("👩‍🎓 Studierende", "5.000+")
-    col3.metric("🏫 Fakultäten", "5")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("📚 Studiengänge", "40+")
+    c2.metric("👩‍🎓 Studierende", "5.000+")
+    c3.metric("🏫 Fakultäten", "5")
 
-    # --- Tabs für Detail-Bereiche ---
+    # --- Tabs ---
     tabs = st.tabs(["🔗 Links", "🍽️ Mensaplan", "📖 Bibliothek", "💻 Moodle", "🗺️ Campus-Karte"])
 
-    # 1) Wichtige Links in schicken Cards
+    # Tab 1: Links
     with tabs[0]:
+        st.subheader("🔗 Wichtige Links")
         cards = [
             ("🌐 Website", "https://www.hs-kempten.de/"),
             ("📚 Studiengänge", "https://www.hs-kempten.de/studium/studienangebot"),
-            ("🍽️ Mensaplan",  "https://www.stw-swt.de/essen-trinken/speiseplaene/"),
-            ("📖 Bibliothek",  "https://www.hs-kempten.de/einrichtungen/bibliothek"),
-            ("💻 Moodle",      "https://moodle.hs-kempten.de/"),
-            ("🧾 MeinCampus",  "https://campus.hs-kempten.de/")
+            ("🍽️ Mensaplan", "https://www.stw-swt.de/essen-trinken/speiseplaene/"),
+            ("📖 Bibliothek", "https://www.hs-kempten.de/einrichtungen/bibliothek"),
+            ("💻 Moodle", "https://moodle.hs-kempten.de/"),
+            ("🧾 MeinCampus", "https://campus.hs-kempten.de/")
         ]
         cols = st.columns(3)
         for i, (label, url) in enumerate(cards):
             with cols[i % 3]:
                 st.markdown(f"""
                 <div style="
-                    border:1px solid #ddd; 
-                    border-radius:8px; 
-                    padding:1rem; 
+                    border:1px solid #ddd;
+                    border-radius:8px;
+                    padding:1rem;
                     text-align:center;
                     box-shadow:2px 2px 6px rgba(0,0,0,0.1);
                     transition:transform .2s;
@@ -390,46 +406,50 @@ elif menu == "🎓 Hochschule":
                   onmouseover="this.style.transform='scale(1.03)';"
                   onmouseout="this.style.transform='scale(1)';"
                 >
-                  <h3 style="margin-bottom:0.5rem;">{label}</h3>
+                  <h4 style="margin-bottom:0.5rem;">{label}</h4>
                   <a href="{url}" target="_blank" style="color:#00CED1;">{url}</a>
                 </div>
                 """, unsafe_allow_html=True)
 
-    # 2) Mensaplan anzeigen und filtern
+    # Tab 2: Mensaplan
     with tabs[1]:
         st.subheader("🍽️ Mensaplan der Woche")
         df = pd.read_html("https://www.stw-swt.de/essen-trinken/speiseplaene/kempten")[0]
         df.columns = ["Wochentag", "Mensa A", "Mensa B", "Bio-Mensa"]
-        st.dataframe(df.style.set_table_styles(
-            [{"selector":"th","props":[("background-color","#00CED1"),("color","white")]}]
-        ), height=300)
+        st.dataframe(
+            df.style.set_table_styles(
+                [{"selector":"th","props":[("background-color","#00CED1"),("color","white")]}]
+            ),
+            height=300
+        )
 
-    # 3) Bibliotheks-Infos im Expander
+    # Tab 3: Bibliothek
     with tabs[2]:
-        exp = st.expander("📖 Öffnungszeiten & Services")
-        exp.markdown("""
-        - Mo–Fr: 08:00–20:00  
-        - Sa: 10:00–16:00  
-        - Buchkatalog: [online suchen](https://opac.hs-kempten.de)  
-        """)
-        st.download_button("📄 PDF-Katalog herunterladen", data=b"", file_name="katalog.pdf")
+        with st.expander("📖 Öffnungszeiten & Services"):
+            st.markdown("""
+            - Mo–Fr: 08:00–20:00  
+            - Sa: 10:00–16:00  
+            - Buchkatalog: [online suchen](https://opac.hs-kempten.de)  
+            """)
+        st.download_button("📄 PDF-Katalog herunterladen", data=b"", file_name="bibliothek_katalog.pdf")
 
-    # 4) Moodle-Quicklink
+    # Tab 4: Moodle
     with tabs[3]:
         st.subheader("💻 Moodle-Quicklink")
-        username = st.text_input("Benutzername")
-        password = st.text_input("Passwort", type="password")
+        user = st.text_input("Benutzername")
+        pw   = st.text_input("Passwort", type="password")
         if st.button("Login"):
             st.success("🔒 Simulierter Login erfolgreich")
 
-    # 5) Campus-Karte mit st.map
+    # Tab 5: Campus-Karte
     with tabs[4]:
         st.subheader("🗺️ Campus-Karte")
-        df_map = pd.DataFrame({"lat": [47.726], "lon": [10.312]})
+        df_map = pd.DataFrame({"lat":[47.726], "lon":[10.312]})
         st.map(df_map, zoom=16)
 
-    # --- Footer ---
+    # Footer
     st.markdown("---")
-    st.info("🌟 Designed by dein Studi-Buddy")
+    st.info("🌟 Designed by dein Studi-Buddy 🚀")
+
 
 
