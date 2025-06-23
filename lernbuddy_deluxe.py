@@ -406,26 +406,26 @@ elif menu == "🎓 Hochschule":
                 </div>
                 """, unsafe_allow_html=True)
 
-    # Tab 2: Mensaplan
-    with tabs[1]:
-        st.subheader("🍽️ Mensaplan der Woche")
-        try:
-            res = requests.get("https://www.hs-kempten.de/campusgastronomie")
-            soup = BeautifulSoup(res.text, "html.parser")
-            table = soup.find("table")
-            if table:
-                df = pd.read_html(str(table))[0]
-                df.columns = ["Wochentag", "Mensa A", "Mensa B", "Bio-Mensa"]
-                st.dataframe(
-                    df.style.set_table_styles(
-                        [{"selector":"th","props":[("background-color","#00CED1"),("color","white")]}]
-                    ),
-                    height=300
-                )
-            else:
-                st.warning("⚠️ Keine Tabelle auf der Seite gefunden.")
-        except Exception as e:
-            st.error(f"❌ Fehler beim Laden des Mensaplans: {e}")
+# Tab 2: Mensaplan
+with tabs[1]:
+    st.subheader("🍽️ Mensaplan der Woche")
+
+    pdf_url = "https://www.max-manager.de/daten-extern/augsburg/pdf/wochenplaene/hs-kempten/aktuell.pdf"
+
+    try:
+        st.markdown(f"""
+        👉 Den aktuellen Mensaplan findest du hier als PDF:  
+        [📄 Jetzt anzeigen]({pdf_url})
+        """)
+        st.download_button(
+            label="📥 PDF herunterladen",
+            data=requests.get(pdf_url).content,
+            file_name="mensaplan_kempten.pdf",
+            mime="application/pdf"
+        )
+    except Exception as e:
+        st.error(f"❌ Fehler beim Laden des Mensaplan-PDFs: {e}")
+
 
     # Tab 3: Bibliothek
     with tabs[2]:
