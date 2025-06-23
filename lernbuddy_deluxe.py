@@ -132,6 +132,7 @@ elif menu == "💬 GPT-Chat":
 # Lernplan
 elif menu == "🧠 Lernplan":
     st.header("🧠 Lernplan mit Uhrzeiten, Pausen & GPT-Hinweisen")
+
     n = st.number_input("Wie viele Prüfungen hast du?", 1, 10)
     subjects = []
 
@@ -139,7 +140,8 @@ elif menu == "🧠 Lernplan":
         name = st.text_input(f"📘 Fach {i+1}", key=f"subj_{i}")
         date = st.date_input(f"📅 Prüfung {i+1}", key=f"date_{i}")
         diff = st.slider("📊 Schwierigkeit (1–10)", 1, 10, key=f"diff_{i}")
-        subjects.append((name, date, diff))
+        if name.strip():  # nur wenn Fachname vorhanden ist
+            subjects.append((name.strip(), date, diff))
 
     hinweise = st.text_area("📝 Besondere Wünsche an GPT (optional)", 
         placeholder="Z. B.: Sonntag frei. Mathe doppelt so oft. Informatik nur vormittags...")
@@ -178,30 +180,20 @@ elif menu == "🧠 Lernplan":
         return pd.DataFrame(schedule)
 
     if st.button("✅ Lernplan mit GPT-Hinweisen erstellen"):
-        prompt = f"""
-        Du bist ein KI-Planer für Lernpläne. Erstelle eine Aufteilung mit Uhrzeiten und Pausen für folgende Prüfungen:
+        if not subjects:
+            st.warning("⚠️ Bitte gib mindestens ein Fach mit Namen ein.")
+        else:
+            df = generate_learning_schedule(subjects)
+            if df.empty:
+                st.warning("❌ Kein Plan erzeugt – bitte prüfe deine Daten und Prüfungstermine.")
+            else:
+                st.success("✅ Lernplan erfolgreich erstellt:")
+                st.dataframe(df)
 
-        {subjects}
+                df.to_excel("lernplan.xlsx", index=False)
+                with open("lernplan.xlsx", "rb") as f:
+                    st.download_button("📥 Excel herunterladen", f, file_name="lernplan.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-        Berücksichtige folgende Wünsche:
-        {hinweise}
-        """
-        try:
-            gpt_response = client.chat.completions.create(
-                model="gpt-4",
-                messages=[{"role": "user", "content": prompt}]
-            )
-            st.markdown("🤖 **GPT-Vorschlag:**")
-            st.markdown(gpt_response.choices[0].message.content)
-        except Exception as e:
-            st.error(f"Fehler bei GPT-Aufruf: {e}")
-
-        df = generate_learning_schedule(subjects)
-        st.success("✅ Zeitbasierter Lernplan lokal erstellt:")
-        st.dataframe(df)
-        df.to_excel("lernplan.xlsx", index=False)
-        with open("lernplan.xlsx", "rb") as f:
-            st.download_button("📥 Excel herunterladen", f, file_name="lernplan.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 # Suche
 elif menu == "🔎 Suche":
