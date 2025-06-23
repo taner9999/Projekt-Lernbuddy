@@ -4,20 +4,20 @@ import pandas as pd
 import json
 import os
 import requests
-import openai
 from streamlit_lottie import st_lottie
 from fpdf import FPDF
 from ics import Calendar, Event
+from openai import OpenAI
 
-# === OpenAI GPT API-Key aus Secrets (NICHT im Code!)
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# GPT-Client initialisieren
+client = OpenAI(api_key=os.getenv("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"))
 
-# === Farbpalette Hochschule Kempten
+# === Farben ===
 PRIMARY = "#003865"
 SECONDARY = "#00A3E0"
 ACCENT = "#F39200"
 
-# === Darkmode Setup
+# === Darkmode ===
 if "darkmode" not in st.session_state:
     st.session_state.darkmode = False
 
@@ -26,7 +26,6 @@ def toggle_darkmode():
 
 st.set_page_config(page_title="Lernbuddy Deluxe", layout="wide")
 
-# === CSS
 st.markdown(f"""
     <style>
     body {{
@@ -41,7 +40,6 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# === Animation laden
 def show_lottie(url, h=200):
     r = requests.get(url)
     if r.status_code == 200:
@@ -49,13 +47,12 @@ def show_lottie(url, h=200):
     else:
         st.warning("⚠️ Animation konnte nicht geladen werden.")
 
-# === Sidebar Navigation
 with st.sidebar:
     st.title("📚 Lernbuddy Deluxe")
     st.button("🌗 Darkmode umschalten", on_click=toggle_darkmode)
     menu = st.radio("Navigation", ["🏠 Start", "💬 GPT-Chat", "🧠 Lernplan", "🔎 Suche", "🎓 Hochschule"])
 
-# === Startseite
+# Startseite
 if menu == "🏠 Start":
     st.title("🎓 Willkommen bei Lernbuddy Deluxe")
     show_lottie("https://assets2.lottiefiles.com/packages/lf20_myejiggj.json")
@@ -67,11 +64,9 @@ if menu == "🏠 Start":
     - 🔎 Suchfunktion
     - 🎨 Darkmode & Farben
     - 🎓 Infos zur Hochschule Kempten
-
-    Entwickelt mit ❤️ von **Taner Altin** & **Shefki Kuleta**
     """)
 
-# === GPT-Chat
+# GPT-Chat
 elif menu == "💬 GPT-Chat":
     st.header("💬 GPT-Chat")
     user_color = st.color_picker("Farbe für deine Nachrichten", "#00A3E0")
@@ -84,7 +79,7 @@ elif menu == "💬 GPT-Chat":
     if user_input:
         st.session_state.chat.append({"role": "user", "content": user_input})
         try:
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=st.session_state.chat
             )
@@ -103,7 +98,7 @@ elif menu == "💬 GPT-Chat":
         </div>
         """, unsafe_allow_html=True)
 
-# === Lernplan
+# Lernplan
 elif menu == "🧠 Lernplan":
     st.header("📅 Lernplan erstellen")
     n = st.number_input("Wie viele Prüfungen hast du?", 1, 10)
@@ -132,11 +127,11 @@ elif menu == "🧠 Lernplan":
                     "Stunden": f"{std}h"
                 })
         save_plan(plan)
-        st.success("✅ Lernplan gespeichert!")
         df = pd.DataFrame(plan)
+        st.success("✅ Lernplan gespeichert!")
         st.dataframe(df)
 
-# === Suche
+# Suche
 elif menu == "🔎 Suche":
     st.header("🔍 Lernplan durchsuchen")
     term = st.text_input("Suchbegriff:")
@@ -152,7 +147,7 @@ elif menu == "🔎 Suche":
     else:
         st.info("Kein Lernplan vorhanden.")
 
-# === Hochschule Kempten
+# Hochschule
 elif menu == "🎓 Hochschule":
     st.header("🎓 Hochschule Kempten")
     show_lottie("https://assets10.lottiefiles.com/packages/lf20_3rwasyjy.json", 180)
