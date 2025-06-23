@@ -131,7 +131,7 @@ elif menu == "💬 GPT-Chat":
 
 # Lernplan
 elif menu == "🧠 Lernplan":
-    st.header("🧠 Lernplan mit Uhrzeiten, Pausen & GPT-Hinweisen")
+    st.header("🧠 Lernplan mit Uhrzeiten, Pausen & GPT-Hinweisen pro Fach")
 
     n = st.number_input("Wie viele Prüfungen hast du?", 1, 10)
     subjects = []
@@ -140,59 +140,51 @@ elif menu == "🧠 Lernplan":
         name = st.text_input(f"📘 Fach {i+1}", key=f"subj_{i}")
         date = st.date_input(f"📅 Prüfung {i+1}", key=f"date_{i}")
         diff = st.slider("📊 Schwierigkeit (1–10)", 1, 10, key=f"diff_{i}")
-        if name.strip():  # nur wenn Fachname vorhanden ist
-            subjects.append((name.strip(), date, diff))
+        hint = st.text_area(f"🧠 Hinweise für GPT zu '{name or 'Fach'}'", key=f"hint_{i}",
+                            placeholder="z. B.: Nur ab 12 Uhr. Nicht am Wochenende.")
+        if name.strip():
+            subjects.append({
+                "name": name.strip(),
+                "exam_date": str(date),
+                "difficulty": diff,
+                "hint": hint.strip()
+            })
 
-    hinweise = st.text_area("📝 Besondere Wünsche an GPT (optional)", 
-        placeholder="Z. B.: Sonntag frei. Mathe doppelt so oft. Informatik nur vormittags...")
-
-    def generate_learning_schedule(subjects, start_hour=9, end_hour=18, session_minutes=45, break_minutes=15):
-        schedule = []
-        sessions = []
-        day_pointer = datetime.date.today()
-
-        for name, exam_date, difficulty in subjects:
-            total_minutes = difficulty * 90
-            sessions.append({"name": name, "exam_date": exam_date, "remaining": total_minutes})
-
-        for _ in range(28):
-            current_time = datetime.datetime.combine(day_pointer, datetime.time(start_hour, 0))
-            end_time = datetime.datetime.combine(day_pointer, datetime.time(end_hour, 0))
-
-            while current_time + datetime.timedelta(minutes=session_minutes) <= end_time:
-                sessions.sort(key=lambda x: (x["exam_date"], -x["remaining"]))
-                for subj in sessions:
-                    if subj["remaining"] >= session_minutes and day_pointer < subj["exam_date"]:
-                        schedule.append({
-                            "Datum": day_pointer.strftime("%A, %d.%m.%Y"),
-                            "Fach": subj["name"],
-                            "Startzeit": current_time.strftime("%H:%M"),
-                            "Endzeit": (current_time + datetime.timedelta(minutes=session_minutes)).strftime("%H:%M"),
-                            "Dauer": f"{session_minutes} Min"
-                        })
-                        subj["remaining"] -= session_minutes
-                        current_time += datetime.timedelta(minutes=session_minutes + break_minutes)
-                        break
-                else:
-                    break
-            day_pointer += datetime.timedelta(days=1)
-
-        return pd.DataFrame(schedule)
-
-    if st.button("✅ Lernplan mit GPT-Hinweisen erstellen"):
+    if st.button("✅ GPT-Lernplan generieren"):
         if not subjects:
-            st.warning("⚠️ Bitte gib mindestens ein Fach mit Namen ein.")
+            st.warning("Bitte gib mindestens ein Fach ein.")
         else:
-            df = generate_learning_schedule(subjects)
-            if df.empty:
-                st.warning("❌ Kein Plan erzeugt – bitte prüfe deine Daten und Prüfungstermine.")
-            else:
-                st.success("✅ Lernplan erfolgreich erstellt:")
-                st.dataframe(df)
+            # GPT Prompt erzeugen
+            fachinfos = "\n".join(
+                [f"- {s['name']} (Prüfung am {s['exam_date']}, Schwierigkeit {s['difficulty']}) – Hinweis: {s['hint'] or 'Keine'}"
+                 for s in subjects])
+            prompt = f"""
+Du bist ein Lernplan-Optimierer.
 
-                df.to_excel("lernplan.xlsx", index=False)
-                with open("lernplan.xlsx", "rb") as f:
-                    st.download_button("📥 Excel herunterladen", f, file_name="lernplan.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+Erstelle einen 4‑Wochen-Lernplan mit konkreten Tagen, Uhrzeiten (z. B. 10:00–10:45), Pausen und Wiederholungen für folgende Fächer.
+
+Beachte die individuellen Hinweise pro Fach!
+
+Fächer:
+{fachinfos}
+
+Strukturiere den Plan klar nach Tagen.
+Vermeide doppelte Zeiten. Gib maximal 4 Lerneinheiten pro Tag aus.
+Zeige mir deinen Lernplan als Klartext an.
+"""
+
+            with st.spinner("GPT plant deinen Lernplan..."):
+                try:
+                    response = client.chat.completions.create(
+                        model="gpt-4",
+                        messages=[{"role": "user", "content": prompt}]
+                    )
+                    plan = response.choices[0].message.content
+                    st.markdown("### 📅 GPT-Lernplan-Vorschlag:")
+                    st.markdown(plan)
+                except Exception as e:
+                    st.error(f"Fehler beim GPT-Aufruf: {e}")
+
 
 
 # Suche
