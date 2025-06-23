@@ -1,7 +1,0 @@
-streamlit
-openai
-pandas
-requests
-streamlit-lottie
-fpdf
-ics
