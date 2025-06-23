@@ -131,7 +131,7 @@ elif menu == "💬 GPT-Chat":
 
 # Lernplan
 elif menu == "🧠 Lernplan":
-    st.header("🧠 Lernplan mit GPT-Hinweisen pro Fach")
+    st.header("🧠 Lernplan mit GPT-Hinweisen pro Fach und Farbausgabe")
 
     n = st.number_input("Wie viele Prüfungen hast du?", 1, 10)
     subjects = []
@@ -160,19 +160,18 @@ elif menu == "🧠 Lernplan":
             )
 
             prompt = f"""
-Du bist ein Lerncoach und erstelle bitte einen Lernplan für die folgenden Fächer, Prüfungen und persönlichen Hinweise.
+Du bist ein Lerncoach und erstellst einen Lernplan für die folgenden Fächer, Prüfungen und individuellen Hinweise.
 
-Erstelle einen 4‑Wochen-Plan mit Uhrzeiten (z. B. 10:00–10:45), Pausen und maximal 4 Blöcken pro Tag. Verteile die Fächer sinnvoll, beachte die individuellen Wünsche, und vermeide Doppelbelegungen.
+Erstelle einen 4‑Wochen-Plan mit Uhrzeiten (z. B. 10:00–10:45), Pausen und maximal 4 Blöcken pro Tag. Beachte persönliche Wünsche und prüfe auf Überschneidungen.
 
 Fächer & Hinweise:
 {fachliste}
 
-Erstelle den Plan strukturiert nach Tagen. Nutze deutsche Wochentage und gib den Plan in folgendem Format aus:
+Gib den Plan im Format aus:
 
 Montag, 01.07.2025  
 - 12:00–12:45: Mathe  
-- 13:15–14:00: BWL  
-...
+- 14:00–14:45: BWL  
 """
 
             with st.spinner("GPT plant deinen Lernplan …"):
@@ -184,8 +183,86 @@ Montag, 01.07.2025
                     result = response.choices[0].message.content
                     st.markdown("### 📅 Vorschlag von GPT:")
                     st.markdown(result)
+
+                    import re
+
+                    def parse_gpt_plan(plan_text):
+                        data = []
+                        current_day = None
+                        date_pattern = re.compile(r"^([A-Za-zäöüÄÖÜß]+), (\d{2}\.\d{2}\.\d{4})$")
+                        session_pattern = re.compile(r"(\d{2}:\d{2})–(\d{2}:\d{2}): (.+)")
+                        lines = plan_text.splitlines()
+                        for line in lines:
+                            line = line.strip()
+                            if not line or line.startswith("Prüfung") or "Pause" in line:
+                                continue
+                            date_match = date_pattern.match(line)
+                            if date_match:
+                                current_day = {"Wochentag": date_match.group(1), "Datum": date_match.group(2)}
+                            elif session_pattern.match(line) and current_day:
+                                start, end, fach = session_pattern.findall(line)[0]
+                                data.append({
+                                    "Wochentag": current_day["Wochentag"],
+                                    "Datum": current_day["Datum"],
+                                    "Fach": fach,
+                                    "Startzeit": start,
+                                    "Endzeit": end,
+                                    "Dauer": "45 Min"
+                                })
+                        return pd.DataFrame(data)
+
+                    df_gpt = parse_gpt_plan(result)
+                    if df_gpt.empty:
+                        st.warning("⚠️ GPT-Plan konnte nicht in eine Tabelle umgewandelt werden.")
+                    else:
+                        st.markdown("### 🧠 GPT-Plan als Tabelle mit Farben:")
+                        fachfarben = {}
+                        farben = ["#FFD700", "#00CED1", "#FF8C00", "#ADFF2F", "#DA70D6", "#FFA07A", "#7FFFD4", "#D2691E"]
+                        for i, fach in enumerate(df_gpt["Fach"].unique()):
+                            fachfarben[fach] = farben[i % len(farben)]
+
+                        for _, row in df_gpt.iterrows():
+                            color = fachfarben.get(row["Fach"], "#EEEEEE")
+                            st.markdown(f"""
+                            <div style='background-color:{color};padding:10px;border-radius:8px;margin-bottom:8px'>
+                            <strong>{row["Datum"]} ({row["Wochentag"]})</strong><br>
+                            <span style='font-size:15px'>{row["Startzeit"]}–{row["Endzeit"]}: <b>{row["Fach"]}</b></span>
+                            </div>
+                            """, unsafe_allow_html=True)
+
+                        # 📥 Export als Excel
+                        import openpyxl
+                        from openpyxl.styles import Font, PatternFill
+                        from openpyxl.utils.dataframe import dataframe_to_rows
+
+                        def export_excel_formatted(df, filename="gpt_plan.xlsx"):
+                            wb = openpyxl.Workbook()
+                            ws = wb.active
+                            ws.title = "GPT-Lernplan"
+
+                            for r_idx, row in enumerate(dataframe_to_rows(df, index=False, header=True), 1):
+                                ws.append(row)
+                                for c_idx, cell in enumerate(ws[r_idx], 1):
+                                    if r_idx == 1:
+                                        cell.font = Font(bold=True)
+                                    elif df.columns[c_idx - 1] == "Fach":
+                                        fach = cell.value
+                                        farbe = fachfarben.get(fach, "#FFFFFF").replace("#", "")
+                                        cell.fill = PatternFill(start_color=farbe, end_color=farbe, fill_type="solid")
+
+                            for col in ws.columns:
+                                max_len = max(len(str(c.value)) if c.value else 0 for c in col)
+                                ws.column_dimensions[col[0].column_letter].width = max_len + 2
+
+                            wb.save(filename)
+                            with open(filename, "rb") as f:
+                                st.download_button("📥 GPT-Plan als Excel herunterladen", f, file_name=filename)
+
+                        export_excel_formatted(df_gpt)
+
                 except Exception as e:
                     st.error(f"Fehler beim GPT-Aufruf: {e}")
+
 
 
 # Suche
@@ -216,63 +293,4 @@ st.markdown("""
 - [💻 Moodle](https://moodle.hs-kempten.de/)
 - [🧾 MeinCampus](https://campus.hs-kempten.de/)
 """)
-
-import re
-def parse_gpt_plan(plan_text):
-    data = []
-    current_day = None
-    date_pattern = re.compile(r"^([A-Za-zäöüÄÖÜß]+), (\d{2}\.\d{2}\.\d{4})$")
-    session_pattern = re.compile(r"(\d{2}:\d{2})–(\d{2}:\d{2}): (.+)")
-
-    lines = plan_text.splitlines()
-    for line in lines:
-        line = line.strip()
-        if not line or line.startswith("Prüfung") or "Pause" in line:
-            continue
-        date_match = date_pattern.match(line)
-        if date_match:
-            current_day = {"Wochentag": date_match.group(1), "Datum": date_match.group(2)}
-        elif session_pattern.match(line) and current_day:
-            start, end, fach = session_pattern.findall(line)[0]
-            data.append({
-                "Wochentag": current_day["Wochentag"],
-                "Datum": current_day["Datum"],
-                "Fach": fach,
-                "Startzeit": start,
-                "Endzeit": end,
-                "Dauer": "45 Min"
-            })
-    return pd.DataFrame(data)
-
-df_gpt = parse_gpt_plan(result)
-if df_gpt.empty:
-    st.warning("⚠️ GPT-Plan konnte nicht in eine Tabelle umgewandelt werden.")
-else:
-    st.markdown("### 🧠 GPT-Plan als Tabelle:")
-    st.dataframe(df_gpt)
-
-    import openpyxl
-    from openpyxl.styles import Font
-    from openpyxl.utils.dataframe import dataframe_to_rows
-
-    def export_excel_formatted(df, filename="gpt_plan.xlsx"):
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "GPT-Lernplan"
-
-        for i, row in enumerate(dataframe_to_rows(df, index=False, header=True), 1):
-            ws.append(row)
-            if i == 1:
-                for cell in ws[i]:
-                    cell.font = Font(bold=True)
-
-        for col in ws.columns:
-            max_len = max(len(str(c.value)) if c.value else 0 for c in col)
-            ws.column_dimensions[col[0].column_letter].width = max_len + 2
-
-        wb.save(filename)
-        with open(filename, "rb") as f:
-            st.download_button("📥 GPT-Plan als Excel herunterladen", f, file_name=filename)
-
-    export_excel_formatted(df_gpt)
 
