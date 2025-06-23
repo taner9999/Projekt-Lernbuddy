@@ -131,7 +131,7 @@ elif menu == "💬 GPT-Chat":
 
 # Lernplan
 elif menu == "🧠 Lernplan":
-    st.header("🧠 Lernplan mit Uhrzeiten, Pausen & GPT-Hinweisen pro Fach")
+    st.header("🧠 Lernplan mit GPT-Hinweisen pro Fach")
 
     n = st.number_input("Wie viele Prüfungen hast du?", 1, 10)
     subjects = []
@@ -140,51 +140,52 @@ elif menu == "🧠 Lernplan":
         name = st.text_input(f"📘 Fach {i+1}", key=f"subj_{i}")
         date = st.date_input(f"📅 Prüfung {i+1}", key=f"date_{i}")
         diff = st.slider("📊 Schwierigkeit (1–10)", 1, 10, key=f"diff_{i}")
-        hint = st.text_area(f"🧠 Hinweise für GPT zu '{name or 'Fach'}'", key=f"hint_{i}",
-                            placeholder="z. B.: Nur ab 12 Uhr. Nicht am Wochenende.")
+        hint = st.text_area(f"🧠 Hinweis für GPT zu '{name or 'Fach'}'", key=f"hint_{i}",
+                            placeholder="z. B.: nur ab 12 Uhr, nicht sonntags …")
         if name.strip():
             subjects.append({
                 "name": name.strip(),
                 "exam_date": str(date),
                 "difficulty": diff,
-                "hint": hint.strip()
+                "hint": hint.strip() or "keine"
             })
 
     if st.button("✅ GPT-Lernplan generieren"):
         if not subjects:
-            st.warning("Bitte gib mindestens ein Fach ein.")
+            st.warning("⚠️ Bitte gib mindestens ein Fach ein.")
         else:
-            # GPT Prompt erzeugen
-            fachinfos = "\n".join(
-                [f"- {s['name']} (Prüfung am {s['exam_date']}, Schwierigkeit {s['difficulty']}) – Hinweis: {s['hint'] or 'Keine'}"
-                 for s in subjects])
+            fachliste = "\n".join(
+                [f"- {s['name']} (Prüfung: {s['exam_date']}, Schwierigkeit: {s['difficulty']}) – Hinweis: {s['hint']}"
+                 for s in subjects]
+            )
+
             prompt = f"""
-Du bist ein Lernplan-Optimierer.
+Du bist ein Lerncoach und erstelle bitte einen Lernplan für die folgenden Fächer, Prüfungen und persönlichen Hinweise.
 
-Erstelle einen 4‑Wochen-Lernplan mit konkreten Tagen, Uhrzeiten (z. B. 10:00–10:45), Pausen und Wiederholungen für folgende Fächer.
+Erstelle einen 4‑Wochen-Plan mit Uhrzeiten (z. B. 10:00–10:45), Pausen und maximal 4 Blöcken pro Tag. Verteile die Fächer sinnvoll, beachte die individuellen Wünsche, und vermeide Doppelbelegungen.
 
-Beachte die individuellen Hinweise pro Fach!
+Fächer & Hinweise:
+{fachliste}
 
-Fächer:
-{fachinfos}
+Erstelle den Plan strukturiert nach Tagen. Nutze deutsche Wochentage und gib den Plan in folgendem Format aus:
 
-Strukturiere den Plan klar nach Tagen.
-Vermeide doppelte Zeiten. Gib maximal 4 Lerneinheiten pro Tag aus.
-Zeige mir deinen Lernplan als Klartext an.
+Montag, 01.07.2025  
+- 12:00–12:45: Mathe  
+- 13:15–14:00: BWL  
+...
 """
 
-            with st.spinner("GPT plant deinen Lernplan..."):
+            with st.spinner("GPT plant deinen Lernplan …"):
                 try:
                     response = client.chat.completions.create(
                         model="gpt-4",
                         messages=[{"role": "user", "content": prompt}]
                     )
-                    plan = response.choices[0].message.content
-                    st.markdown("### 📅 GPT-Lernplan-Vorschlag:")
-                    st.markdown(plan)
+                    result = response.choices[0].message.content
+                    st.markdown("### 📅 Vorschlag von GPT:")
+                    st.markdown(result)
                 except Exception as e:
                     st.error(f"Fehler beim GPT-Aufruf: {e}")
-
 
 
 # Suche
