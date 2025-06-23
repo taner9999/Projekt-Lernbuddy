@@ -131,9 +131,9 @@ elif menu == "💬 GPT-Chat":
 
 # Lernplan
 elif menu == "🧠 Lernplan":
-    st.header("🧠 Lernplan mit GPT-Hinweisen, Debugging & Export-Funktionen")
+    st.header("🧠 Lernplan mit GPT-Hinweisen, Farben, Excel- & Kalender-Export + Statistik")
 
-    # 1) Nutzereingaben: Fächer, Prüfungstermine, Schwierigkeit, individuelle Hinweise
+    # 1) Eingabe: Fächer, Prüfungstermine, Schwierigkeit, GPT-Hinweise
     n = st.number_input("Wie viele Prüfungen hast du?", 1, 10)
     subjects = []
     for i in range(int(n)):
@@ -141,8 +141,8 @@ elif menu == "🧠 Lernplan":
         date = st.date_input(f"📅 Prüfung {i+1}", key=f"date_{i}")
         diff = st.slider("📊 Schwierigkeit (1–10)", 1, 10, key=f"diff_{i}")
         hint = st.text_area(
-            f"🧠 Hinweis für GPT zu '{name or 'Fach'}'", 
-            key=f"hint_{i}", 
+            f"🧠 Hinweis für GPT zu '{name or 'Fach'}'",
+            key=f"hint_{i}",
             placeholder="z. B.: nur ab 12 Uhr, nicht sonntags …"
         )
         if name.strip():
@@ -153,7 +153,7 @@ elif menu == "🧠 Lernplan":
                 "hint":       hint.strip() or "keine"
             })
 
-    # 2) Button für GPT-Plan
+    # 2) Button zum GPT-Plan
     if st.button("✅ GPT-Lernplan generieren"):
         if not subjects:
             st.warning("⚠️ Bitte gib mindestens ein Fach ein.")
@@ -164,7 +164,7 @@ elif menu == "🧠 Lernplan":
             )
             prompt = f"""
 Du bist ein Lerncoach und erstellst einen Lernplan für diese Fächer, Prüfungen und Hinweise.
-Erstelle einen 4-Wochen-Plan mit Uhrzeiten (z. B. 10:00–10:45), Pausen, max. 4 Blöcken/Tag.
+Erstelle einen 4-Wochen-Plan mit Uhrzeiten (z. B. 10:00–10:45), Pausen und maximal 4 Blöcken pro Tag.
 Beachte persönliche Wünsche und prüfe auf Überschneidungen.
 
 Fächer & Hinweise:
@@ -172,25 +172,24 @@ Fächer & Hinweise:
 
 Gib den Plan im Format aus:
 
-Montag, 01.07.2025
-- 12:00–12:45: Mathe
-- 14:00–14:45: BWL
+Montag, 01.07.2025  
+- 12:00–12:45: Mathe  
+- 14:00–14:45: BWL  
 """
             with st.spinner("GPT plant deinen Lernplan …"):
                 try:
                     # 3) GPT-Aufruf
                     response = client.chat.completions.create(
                         model="gpt-4",
-                        messages=[{"role":"user","content":prompt}]
+                        messages=[{"role": "user", "content": prompt}]
                     )
                     result = response.choices[0].message.content
+                    st.markdown("### 📅 Vorschlag von GPT:")
+                    st.markdown(result)
 
-                    # 4) Debug: Raw-Output anzeigen
-                    st.text_area("📋 Rohplan von GPT", result, height=200)
-                    st.write("🔍 Zeilen im Rohplan:", result.splitlines())
-
-                    # 5) Superrobuster Parser
+                    # 4) Parser für verschiedene GPT-Formate
                     import re, pandas as pd
+
                     def parse_gpt_plan(text):
                         date_re = re.compile(r"^([A-Za-zäöüÄÖÜß]+)[, ]+\s*(\d{2}[./]\d{2}[./]\d{4})")
                         session_re = re.compile(
@@ -206,7 +205,10 @@ Montag, 01.07.2025
                             dm = date_re.match(line)
                             sm = session_re.match(line)
                             if dm:
-                                current = {"Wochentag": dm.group(1), "Datum": dm.group(2).replace(".", ".")}
+                                current = {
+                                    "Wochentag": dm.group(1),
+                                    "Datum":     dm.group(2).replace(".", ".")
+                                }
                             elif sm and current:
                                 start, end, fach = sm.groups()
                                 rows.append({
@@ -224,79 +226,100 @@ Montag, 01.07.2025
                     if df_gpt.empty:
                         st.warning("⚠️ GPT-Plan konnte nicht in eine Tabelle umgewandelt werden.")
                     else:
-                        # 6) Farbige Übersicht in Streamlit
+                        # 5) Farbige Anzeige in Streamlit
                         st.markdown("### 🧠 GPT-Plan (farbig):")
-                        palette = ["#FFD700","#00CED1","#FF8C00","#ADFF2F","#DA70D6","#FFA07A","#7FFFD4","#D2691E"]
-                        fachfarben = {f: palette[i%len(palette)] for i,f in enumerate(df_gpt["Fach"].unique())}
+                        palette = ["#FFD700", "#00CED1", "#FF8C00", "#ADFF2F",
+                                   "#DA70D6", "#FFA07A", "#7FFFD4", "#D2691E"]
+                        fachfarben = {
+                            f: palette[i % len(palette)]
+                            for i, f in enumerate(df_gpt["Fach"].unique())
+                        }
 
                         for _, r in df_gpt.iterrows():
                             c = fachfarben.get(r["Fach"], "#EEE")
                             st.markdown(f"""
-                                <div style='background-color:{c};padding:8px;border-radius:6px;margin-bottom:6px'>
+                                <div style='background-color:{c};
+                                            padding:8px;
+                                            border-radius:6px;
+                                            margin-bottom:6px'>
                                   <strong>{r["Datum"]} ({r["Wochentag"]})</strong><br>
                                   {r["Startzeit"]}–{r["Endzeit"]}: <b>{r["Fach"]}</b>
                                 </div>
                             """, unsafe_allow_html=True)
 
-                        # 7) Lernzeit-Statistik
+                        # 6) Lernzeit-Statistik
                         df_stats = df_gpt.copy()
                         df_stats["Minuten"] = df_stats["Dauer"].str.extract(r"(\d+)").astype(int)
                         stats = df_stats.groupby("Fach").agg(
-                            Sessions=("Fach","count"),
-                            Total_Minuten=("Minuten","sum")
+                            Sessions=("Fach", "count"),
+                            Total_Minuten=("Minuten", "sum")
                         ).reset_index()
                         st.markdown("### 📊 Lernzeit-Statistik pro Fach")
                         st.dataframe(stats)
 
-                        # 8) Excel-Export mit Farben
+                        # 7) Excel-Export mit Farbformatierung
                         import openpyxl
                         from openpyxl.styles import Font, PatternFill
                         from openpyxl.utils.dataframe import dataframe_to_rows
+
                         def export_excel(df, stats_df, filename="lernplan.xlsx"):
                             wb = openpyxl.Workbook()
                             ws1 = wb.active; ws1.title = "Plan"
-                            for i,row in enumerate(dataframe_to_rows(df, index=False, header=True),1):
+                            # Plan-Daten
+                            for i, row in enumerate(dataframe_to_rows(df, index=False, header=True), 1):
                                 ws1.append(row)
-                                for j,cell in enumerate(ws1[i],1):
-                                    if i==1:
+                                for j, cell in enumerate(ws1[i], 1):
+                                    if i == 1:
                                         cell.font = Font(bold=True)
-                                    elif df.columns[j-1]=="Fach":
+                                    elif df.columns[j-1] == "Fach":
                                         col = fachfarben[cell.value].lstrip("#")
-                                        cell.fill = PatternFill(start_color=col,end_color=col,fill_type="solid")
+                                        cell.fill = PatternFill(
+                                            start_color=col, end_color=col, fill_type="solid"
+                                        )
+                            # Statistik-Blatt
                             ws2 = wb.create_sheet("Statistik")
-                            for i,row in enumerate(dataframe_to_rows(stats_df, index=False, header=True),1):
+                            for i, row in enumerate(dataframe_to_rows(stats_df, index=False, header=True), 1):
                                 ws2.append(row)
-                                if i==1:
+                                if i == 1:
                                     for cell in ws2[i]:
                                         cell.font = Font(bold=True)
-                            for ws in (ws1,ws2):
+                            # Spaltenbreiten anpassen
+                            for ws in (ws1, ws2):
                                 for col in ws.columns:
-                                    w=max(len(str(c.value)) for c in col)+2
-                                    ws.column_dimensions[col[0].column_letter].width=w
+                                    width = max(len(str(c.value)) for c in col) + 2
+                                    ws.column_dimensions[col[0].column_letter].width = width
                             wb.save(filename)
-                            with open(filename,"rb") as f:
+                            with open(filename, "rb") as f:
                                 st.download_button("📥 Excel herunterladen", f, file_name=filename)
+
                         export_excel(df_gpt, stats)
 
-                        # 9) Kalender-Export (.ics)
+                        # 8) ICS-Kalender-Export
                         from ics import Calendar, Event
                         import datetime as dt
+
                         def export_ics(df, filename="lernplan.ics"):
                             cal = Calendar()
-                            for _,r in df.iterrows():
-                                d = dt.datetime.strptime(r["Datum"],"%d.%m.%Y").date()
-                                stime = dt.datetime.strptime(r["Startzeit"],"%H:%M").time()
-                                etime = dt.datetime.strptime(r["Endzeit"],"%H:%M").time()
+                            for _, r in df.iterrows():
+                                d = dt.datetime.strptime(r["Datum"], "%d.%m.%Y").date()
+                                stime = dt.datetime.strptime(r["Startzeit"], "%H:%M").time()
+                                etime = dt.datetime.strptime(r["Endzeit"], "%H:%M").time()
                                 ev = Event()
                                 ev.name        = f"{r['Fach']} – Lernen"
-                                ev.begin       = dt.datetime.combine(d,stime)
-                                ev.end         = dt.datetime.combine(d,etime)
+                                ev.begin       = dt.datetime.combine(d, stime)
+                                ev.end         = dt.datetime.combine(d, etime)
                                 ev.description = f"{r['Fach']} am {r['Datum']} ({r['Wochentag']})"
                                 cal.events.add(ev)
-                            with open(filename,"w",encoding="utf-8") as f:
+                            with open(filename, "w", encoding="utf-8") as f:
                                 f.writelines(cal)
-                            with open(filename,"rb") as f:
-                                st.download_button("📆 ICS herunterladen", f, file_name=filename, mime="text/calendar")
+                            with open(filename, "rb") as f:
+                                st.download_button(
+                                    "📆 ICS herunterladen",
+                                    f,
+                                    file_name=filename,
+                                    mime="text/calendar"
+                                )
+
                         export_ics(df_gpt)
 
                 except Exception as e:
