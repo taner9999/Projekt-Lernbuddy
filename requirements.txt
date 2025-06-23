@@ -1,7 +1,8 @@
 streamlit
-openai>=1.0.0
 pandas
+openpyxl
+requests
+streamlit-lottie
 fpdf
 ics
-streamlit-lottie
-requests
+openai
