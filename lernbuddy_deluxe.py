@@ -445,11 +445,16 @@ with tabs[1]:
         if st.button("Login"):
             st.success("🔒 Simulierter Login erfolgreich")
 
-    # Tab 5: Campus-Karte
-    with tabs[4]:
-        st.subheader("🗺️ Campus-Karte")
-        df_map = pd.DataFrame({"lat": [47.726], "lon": [10.312]})
-        st.map(df_map, zoom=16)
+  # Tab 5: Campus-Karte
+with tabs[4]:
+    st.subheader("🗺️ Campus-Karte")
+
+    hs_lat = 47.72562
+    hs_lon = 10.31459
+    df_map = pd.DataFrame({"lat": [hs_lat], "lon": [hs_lon]})
+
+    st.map(df_map, zoom=17)  # Zoom 17 = sehr nah, ideal für Campus
+
 
     st.markdown("---")
     st.info("🌟 Designed by dein Studi-Buddy 🚀")
