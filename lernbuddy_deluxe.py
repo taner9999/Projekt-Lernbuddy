@@ -10,7 +10,7 @@ from ics import Calendar, Event
 from openai import OpenAI
 
 # GPT-Client initialisieren
-client = OpenAI(api_key=os.getenv("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"))
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # === Farben ===
 PRIMARY = "#003865"
