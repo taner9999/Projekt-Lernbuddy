@@ -435,5 +435,4 @@ elif menu == "🎓 Hochschule":
     # --- Footer ---
     st.markdown("---")
     st.info("Designed by dein Studi-Buddy 🚀")
-
 """)
