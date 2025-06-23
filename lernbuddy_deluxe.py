@@ -131,7 +131,7 @@ elif menu == "💬 GPT-Chat":
 
 # Lernplan
 elif menu == "🧠 Lernplan":
-    st.header("🧠 Lernplan mit GPT-Hinweisen pro Fach und Farbausgabe")
+    st.header("🧠 Lernplan mit GPT-Hinweisen, Farben, Excel- & Kalenderexport")
 
     n = st.number_input("Wie viele Prüfungen hast du?", 1, 10)
     subjects = []
@@ -184,37 +184,41 @@ Montag, 01.07.2025
                     st.markdown("### 📅 Vorschlag von GPT:")
                     st.markdown(result)
 
+                    # 📑 Parser
                     import re
-
                     def parse_gpt_plan(plan_text):
                         data = []
                         current_day = None
-                        date_pattern = re.compile(r"^([A-Za-zäöüÄÖÜß]+), (\d{2}\.\d{2}\.\d{4})$")
-                        session_pattern = re.compile(r"(\d{2}:\d{2})–(\d{2}:\d{2}): (.+)")
-                        lines = plan_text.splitlines()
-                        for line in lines:
+                        date_pattern = re.compile(r"^([A-Za-zäöüÄÖÜß]+),\s*(\d{2}[./]\d{2}[./]\d{4})")
+                        session_pattern = re.compile(r"(\d{2}[:\.]\d{2})\s*(–|-|bis)\s*(\d{2}[:\.]\d{2})\s*[:\-–]?\s*(.+)")
+                        for line in plan_text.splitlines():
                             line = line.strip()
-                            if not line or line.startswith("Prüfung") or "Pause" in line:
+                            if not line or "Pause" in line:
                                 continue
-                            date_match = date_pattern.match(line)
-                            if date_match:
-                                current_day = {"Wochentag": date_match.group(1), "Datum": date_match.group(2)}
+                            if date_pattern.match(line):
+                                match = date_pattern.match(line)
+                                current_day = {
+                                    "Wochentag": match.group(1),
+                                    "Datum": match.group(2).replace(".", ".")
+                                }
                             elif session_pattern.match(line) and current_day:
-                                start, end, fach = session_pattern.findall(line)[0]
+                                start, _, end, fach = session_pattern.match(line).groups()
                                 data.append({
                                     "Wochentag": current_day["Wochentag"],
                                     "Datum": current_day["Datum"],
-                                    "Fach": fach,
-                                    "Startzeit": start,
-                                    "Endzeit": end,
+                                    "Fach": fach.strip(),
+                                    "Startzeit": start.replace(".", ":"),
+                                    "Endzeit": end.replace(".", ":"),
                                     "Dauer": "45 Min"
                                 })
                         return pd.DataFrame(data)
 
                     df_gpt = parse_gpt_plan(result)
+
                     if df_gpt.empty:
                         st.warning("⚠️ GPT-Plan konnte nicht in eine Tabelle umgewandelt werden.")
                     else:
+                        # 🎨 Farbzuordnung pro Fach
                         st.markdown("### 🧠 GPT-Plan als Tabelle mit Farben:")
                         fachfarben = {}
                         farben = ["#FFD700", "#00CED1", "#FF8C00", "#ADFF2F", "#DA70D6", "#FFA07A", "#7FFFD4", "#D2691E"]
@@ -230,7 +234,7 @@ Montag, 01.07.2025
                             </div>
                             """, unsafe_allow_html=True)
 
-                        # 📥 Export als Excel
+                        # 📥 Excel-Export
                         import openpyxl
                         from openpyxl.styles import Font, PatternFill
                         from openpyxl.utils.dataframe import dataframe_to_rows
@@ -260,8 +264,39 @@ Montag, 01.07.2025
 
                         export_excel_formatted(df_gpt)
 
+                        # 📆 ICS-Kalenderexport
+                        from ics import Calendar, Event
+
+                        def export_ics_calendar(df, filename="gpt_plan.ics"):
+                            cal = Calendar()
+                            for _, row in df.iterrows():
+                                try:
+                                    datum = datetime.datetime.strptime(row["Datum"], "%d.%m.%Y").date()
+                                    start_time = datetime.datetime.strptime(row["Startzeit"], "%H:%M").time()
+                                    end_time = datetime.datetime.strptime(row["Endzeit"], "%H:%M").time()
+                                    start_dt = datetime.datetime.combine(datum, start_time)
+                                    end_dt = datetime.datetime.combine(datum, end_time)
+
+                                    event = Event()
+                                    event.name = f"{row['Fach']} – Lernen"
+                                    event.begin = start_dt
+                                    event.end = end_dt
+                                    event.description = f"Lerneinheit für {row['Fach']} am {row['Datum']} ({row['Wochentag']})\n{row['Startzeit']}–{row['Endzeit']}"
+                                    cal.events.add(event)
+                                except Exception as e:
+                                    st.warning(f"Fehler beim Kalender-Eintrag: {e}")
+
+                            with open(filename, "w", encoding="utf-8") as f:
+                                f.writelines(cal)
+
+                            with open(filename, "rb") as f:
+                                st.download_button("📆 GPT-Plan als Kalender (.ics)", f, file_name=filename, mime="text/calendar")
+
+                        export_ics_calendar(df_gpt)
+
                 except Exception as e:
                     st.error(f"Fehler beim GPT-Aufruf: {e}")
+
 
 
 
