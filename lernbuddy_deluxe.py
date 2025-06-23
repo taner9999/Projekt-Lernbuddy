@@ -54,10 +54,9 @@ with st.sidebar:
 
 # Startseite
 if menu == "🏠 Start":
-    st.title("🎓 Willkommen bei Lernbuddy Deluxe")
+    st.title("🎓 Willkommen bei Lernbuddy Deluxe 👋")
     show_lottie("https://assets2.lottiefiles.com/packages/lf20_myejiggj.json")
     st.markdown("""
-# 🎓 Willkommen bei **Lernbuddy Deluxe** 👋
 
 **Lernbuddy Deluxe** ist **mehr als nur ein Chatbot** – er ist dein persönlicher Studien-Coach, digitaler Lernpartner und smarter Assistent, der dich durch das gesamte Semester begleitet! 🚀📚
 
