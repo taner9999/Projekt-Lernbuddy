@@ -1,4 +1,3 @@
-# LERNBUDDY DELUXE — KOMPLETTCODE
 import streamlit as st
 import datetime
 import pandas as pd
@@ -50,13 +49,28 @@ with st.sidebar:
     st.button("🌗 Darkmode umschalten", on_click=toggle_darkmode)
     menu = st.radio("Navigation", ["🏠 Start", "💬 GPT-Chat", "🧠 Lernplan", "🔎 Suche", "🎓 Hochschule"])
 
-# START
+# Startseite
 if menu == "🏠 Start":
     st.title("🎓 Willkommen bei Lernbuddy Deluxe 👋")
     show_lottie("https://assets2.lottiefiles.com/packages/lf20_myejiggj.json")
-    st.markdown("...(dein Willkommenstext bleibt gleich, wegen Platz hier gekürzt)...")
+    st.markdown("""
+**Lernbuddy Deluxe** ist dein persönlicher Studien-Coach und smarter Lernpartner! 🚀📚  
+Erstelle Lernpläne, stelle Fragen im Chat, informiere dich über die Hochschule Kempten.
 
-# GPT-CHAT
+---
+
+## 💡 Was Lernbuddy Deluxe für dich tun kann:
+
+- 💬 GPT-Chat – Dein KI-Tutor für Fragen & Erklärungen
+- 🧠 Lernplan-Generator mit Zeitblöcken & Pausen
+- 🔎 Intelligente Suche im Lernplan
+- 🎨 Darkmode & Farben nach deinem Stil
+- 🎓 Hochschule-Kempten-Panel mit nützlichen Links
+
+> Entwickelt mit ❤️ von Studierenden – powered by Streamlit & OpenAI GPT-4.
+""")
+
+# GPT-Chat
 elif menu == "💬 GPT-Chat":
     st.header("💬 GPT-Chat")
     user_color = st.color_picker("Farbe für deine Nachrichten", "#00A3E0")
@@ -88,22 +102,22 @@ elif menu == "💬 GPT-Chat":
         </div>
         """, unsafe_allow_html=True)
 
-# LERNPLAN NEU (mit Zeit + Pausen + Excel)
+# Lernplan mit Uhrzeiten & Excel
 elif menu == "🧠 Lernplan":
-    st.header("📅 Intelligenter Lernplan mit Uhrzeiten und Pausen")
+    st.header("🧠 Lernplan mit Uhrzeiten & Pausen")
     n = st.number_input("Wie viele Prüfungen hast du?", 1, 10)
     subjects = []
 
     for i in range(int(n)):
         name = st.text_input(f"📘 Fach {i+1}", key=f"subj_{i}")
         date = st.date_input(f"📅 Prüfung {i+1}", key=f"date_{i}")
-        difficulty = st.slider("📊 Schwierigkeit (1–10)", 1, 10, key=f"diff_{i}")
-        subjects.append((name, date, difficulty))
+        diff = st.slider("📊 Schwierigkeit (1–10)", 1, 10, key=f"diff_{i}")
+        subjects.append((name, date, diff))
 
     def generate_learning_schedule(subjects, start_hour=9, end_hour=18, session_minutes=45, break_minutes=15):
         schedule = []
-        day_pointer = datetime.date.today()
         sessions = []
+        day_pointer = datetime.date.today()
 
         for name, exam_date, difficulty in subjects:
             total_minutes = difficulty * 90
@@ -133,18 +147,18 @@ elif menu == "🧠 Lernplan":
 
         return pd.DataFrame(schedule)
 
-    if st.button("✅ Lernplan erstellen & herunterladen"):
+    if st.button("✅ Lernplan erstellen"):
         df = generate_learning_schedule(subjects)
-        df.to_excel("lernplan.xlsx", index=False)
-        st.success("🎉 Lernplan wurde erstellt und als Excel gespeichert!")
+        st.success("✅ Lernplan wurde erstellt!")
         st.dataframe(df)
+        df.to_excel("lernplan.xlsx", index=False)
         with open("lernplan.xlsx", "rb") as f:
-            st.download_button("📥 Excel-Datei herunterladen", data=f, file_name="lernplan.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            st.download_button("📥 Excel herunterladen", f, file_name="lernplan.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-# SUCHE
+# Suche
 elif menu == "🔎 Suche":
-    st.header("🔍 Lernplan durchsuchen")
-    term = st.text_input("Suchbegriff:")
+    st.header("🔎 Lernplan durchsuchen")
+    term = st.text_input("🔍 Suchbegriff:")
     if os.path.exists("lernplan.xlsx"):
         df = pd.read_excel("lernplan.xlsx")
         result = df[df["Fach"].str.contains(term, case=False, na=False)]
@@ -154,10 +168,19 @@ elif menu == "🔎 Suche":
         else:
             st.warning("Keine Treffer.")
     else:
-        st.info("Kein Lernplan vorhanden.")
+        st.info("Noch kein Lernplan vorhanden.")
 
-# HOCHSCHULE
+# Hochschule
 elif menu == "🎓 Hochschule":
     st.header("🎓 Hochschule Kempten")
     show_lottie("https://assets10.lottiefiles.com/packages/lf20_3rwasyjy.json", 180)
-    st.markdown("...(Linkbereich bleibt wie gehabt)...")
+    st.markdown("""
+**🔗 Links zur Hochschule Kempten:**
+
+- [🌐 Website](https://www.hs-kempten.de/)
+- [📚 Studiengänge](https://www.hs-kempten.de/studium/studienangebot)
+- [🍽️ Mensaplan](https://www.stw-swt.de/essen-trinken/speiseplaene/)
+- [📖 Bibliothek](https://www.hs-kempten.de/einrichtungen/bibliothek)
+- [💻 Moodle](https://moodle.hs-kempten.de/)
+- [🧾 MeinCampus](https://campus.hs-kempten.de/)
+""")
