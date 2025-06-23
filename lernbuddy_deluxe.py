@@ -385,11 +385,11 @@ elif menu == "🎓 Hochschule":
         st.subheader("🔗 Wichtige Links")
         cards = [
             ("🌐 Website", "https://www.hs-kempten.de/"),
-            ("📚 Studiengänge", "https://www.hs-kempten.de/studium/studienangebot"),
-            ("🍽️ Mensaplan", "https://www.stw-swt.de/essen-trinken/speiseplaene/"),
-            ("📖 Bibliothek", "https://www.hs-kempten.de/einrichtungen/bibliothek"),
-            ("💻 Moodle", "https://moodle.hs-kempten.de/"),
-            ("🧾 MeinCampus", "https://campus.hs-kempten.de/")
+            ("📚 Studiengänge", "https://www.hs-kempten.de/studium/studiengaenge"),
+            ("🍽️ Mensaplan", "https://www.hs-kempten.de/campusgastronomie"),
+            ("📖 Bibliothek", "https://www.hs-kempten.de/bibliothek"),
+            ("💻 Moodle", "https://moodle.hs-kempten.de/login/"),
+            ("🧾 MeinCampus", "https://meincampus.hs-kempten.de/qisserver/pages/cs/sys/portal/hisinoneStartPage.faces")
         ]
         cols = st.columns(3)
         for i, (label, url) in enumerate(cards):
@@ -414,7 +414,7 @@ elif menu == "🎓 Hochschule":
     # Tab 2: Mensaplan
     with tabs[1]:
         st.subheader("🍽️ Mensaplan der Woche")
-        df = pd.read_html("https://www.stw-swt.de/essen-trinken/speiseplaene/kempten")[0]
+        df = pd.read_html("https://www.hs-kempten.de/campusgastronomie")[0]
         df.columns = ["Wochentag", "Mensa A", "Mensa B", "Bio-Mensa"]
         st.dataframe(
             df.style.set_table_styles(
