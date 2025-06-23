@@ -222,11 +222,13 @@ elif menu == "🔎 Suche":
 elif menu == "🎓 Hochschule":
     st.header("🎓 Hochschule Kempten")
     show_lottie("https://assets10.lottiefiles.com/packages/lf20_3rwasyjy.json", 180)
-    st.markdown("""
+st.markdown("""
 **🔗 Wichtige Links:**
 - [🌐 Website](https://www.hs-kempten.de/)
 - [📚 Studiengänge](https://www.hs-kempten.de/studium/studienangebot)
 - [🍽️ Mensaplan](https://www.stw-swt.de/essen-trinken/speiseplaene/)
 - [📖 Bibliothek](https://www.hs-kempten.de/einrichtungen/bibliothek)
 - [💻 Moodle](https://moodle.hs-kempten.de/)
-- [🧾 MeinCampus](
+- [🧾 MeinCampus](https://campus.hs-kempten.de/)
+""")
+
