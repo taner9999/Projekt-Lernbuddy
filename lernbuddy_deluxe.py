@@ -341,16 +341,14 @@ elif menu == "🔎 Suche":
 
 # Hochschule
 elif menu == "🎓 Hochschule":
-    import pandas as pd
-    import requests
-    from streamlit_lottie import st_lottie
-
-    # Hilfsfunktion: lädt Lottie-Animation aus URL
     def load_lottie_url(url):
-        r = requests.get(url)
-        if r.status_code != 200:
+        try:
+            r = requests.get(url)
+            if r.status_code != 200:
+                return None
+            return r.json()
+        except Exception:
             return None
-        return r.json()
 
     # --- Header & Animation ---
     st.markdown(
@@ -364,20 +362,17 @@ elif menu == "🎓 Hochschule":
         unsafe_allow_html=True
     )
 
-    # Lottie-Animation korrekt laden und anzeigen
     lottie_json = load_lottie_url("https://assets10.lottiefiles.com/packages/lf20_3rwasyjy.json")
     if lottie_json:
         st_lottie(lottie_json, height=200)
     else:
-        st.error("📌 Konnte Animation nicht laden.")
+        st.warning("📌 Animation konnte nicht geladen werden.")
 
-    # --- Kennzahlen ---
     c1, c2, c3 = st.columns(3)
     c1.metric("📚 Studiengänge", "40+")
     c2.metric("👩‍🎓 Studierende", "5.000+")
     c3.metric("🏫 Fakultäten", "5")
 
-    # --- Tabs ---
     tabs = st.tabs(["🔗 Links", "🍽️ Mensaplan", "📖 Bibliothek", "💻 Moodle", "🗺️ Campus-Karte"])
 
     # Tab 1: Links
@@ -414,14 +409,23 @@ elif menu == "🎓 Hochschule":
     # Tab 2: Mensaplan
     with tabs[1]:
         st.subheader("🍽️ Mensaplan der Woche")
-        df = pd.read_html("https://www.hs-kempten.de/campusgastronomie")[0]
-        df.columns = ["Wochentag", "Mensa A", "Mensa B", "Bio-Mensa"]
-        st.dataframe(
-            df.style.set_table_styles(
-                [{"selector":"th","props":[("background-color","#00CED1"),("color","white")]}]
-            ),
-            height=300
-        )
+        try:
+            res = requests.get("https://www.hs-kempten.de/campusgastronomie")
+            soup = BeautifulSoup(res.text, "html.parser")
+            table = soup.find("table")
+            if table:
+                df = pd.read_html(str(table))[0]
+                df.columns = ["Wochentag", "Mensa A", "Mensa B", "Bio-Mensa"]
+                st.dataframe(
+                    df.style.set_table_styles(
+                        [{"selector":"th","props":[("background-color","#00CED1"),("color","white")]}]
+                    ),
+                    height=300
+                )
+            else:
+                st.warning("⚠️ Keine Tabelle auf der Seite gefunden.")
+        except Exception as e:
+            st.error(f"❌ Fehler beim Laden des Mensaplans: {e}")
 
     # Tab 3: Bibliothek
     with tabs[2]:
@@ -437,16 +441,16 @@ elif menu == "🎓 Hochschule":
     with tabs[3]:
         st.subheader("💻 Moodle-Quicklink")
         user = st.text_input("Benutzername")
-        pw   = st.text_input("Passwort", type="password")
+        pw = st.text_input("Passwort", type="password")
         if st.button("Login"):
             st.success("🔒 Simulierter Login erfolgreich")
 
     # Tab 5: Campus-Karte
     with tabs[4]:
         st.subheader("🗺️ Campus-Karte")
-        df_map = pd.DataFrame({"lat":[47.726], "lon":[10.312]})
+        df_map = pd.DataFrame({"lat": [47.726], "lon": [10.312]})
         st.map(df_map, zoom=16)
 
-    # Footer
     st.markdown("---")
     st.info("🌟 Designed by dein Studi-Buddy 🚀")
+
