@@ -447,31 +447,28 @@ elif menu == "🎓 Hochschule":
         if st.button("Login"):
             st.success("🔒 Simulierter Login erfolgreich")
 
-    # Tab 5: Campus-Karte
-   with tabs[4]:
-    st.subheader("🗺️ Campus-Karte")
+     # Tab 5: Campus-Karte
+    with tabs[4]:
+        st.subheader("🗺️ Campus-Karte")
 
-    # Interaktive Karte (zentriert auf Hochschule Kempten)
-    df_map = pd.DataFrame({
-        "lat": [47.72585],
-        "lon": [10.31390]
-    })
-    st.map(df_map, zoom=18)
+        # Interaktive Karte (zentriert auf Hochschule Kempten)
+        df_map = pd.DataFrame({
+            "lat": [47.72585],
+            "lon": [10.31390]
+        })
+        st.map(df_map, zoom=18)
 
-    # Trennlinie
-    st.markdown("---")
+        st.markdown("---")
+        st.markdown("### 🗺️ Gebäudeübersicht (PDF-Plan)")
+        st.image("https://www.hs-kempten.de/fileadmin/user_upload/Bilder_Campus/Campus_Plan2023.jpg", use_column_width=True)
+        st.caption("Quelle: Hochschule Kempten")
 
-    # Campus-Lageplan als Bild
-    st.markdown("### 🗺️ Gebäudeübersicht (PDF-Plan)")
-    st.image("https://www.hs-kempten.de/fileadmin/user_upload/Bilder_Campus/Campus_Plan2023.jpg", use_column_width=True)
-    st.caption("Quelle: Hochschule Kempten")
+        st.download_button(
+            label="📥 Campus-Plan als PDF herunterladen",
+            data=requests.get("https://www.hs-kempten.de/fileadmin/user_upload/Bilder_Campus/Campus_Plan2023.pdf").content,
+            file_name="campus_plan_kempten.pdf"
+        )
 
-    # Optionaler PDF-Download
-    st.download_button(
-        label="📥 Campus-Plan als PDF herunterladen",
-        data=requests.get("https://www.hs-kempten.de/fileadmin/user_upload/Bilder_Campus/Campus_Plan2023.pdf").content,
-        file_name="campus_plan_kempten.pdf"
-    )
 
     st.markdown("---")
     st.info("🌟 Designed by dein Studi-Buddy 🚀")
