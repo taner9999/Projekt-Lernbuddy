@@ -447,11 +447,11 @@ elif menu == "🎓 Hochschule":
         if st.button("Login"):
             st.success("🔒 Simulierter Login erfolgreich")
 
-     # Tab 5: Campus-Karte
+      # Tab 5: Campus-Karte
     with tabs[4]:
         st.subheader("🗺️ Campus-Karte")
 
-        # Interaktive Karte (zentriert auf Hochschule Kempten)
+        # Interaktive Karte (auf Hochschule Kempten zentriert)
         df_map = pd.DataFrame({
             "lat": [47.72585],
             "lon": [10.31390]
@@ -459,15 +459,21 @@ elif menu == "🎓 Hochschule":
         st.map(df_map, zoom=18)
 
         st.markdown("---")
-        st.markdown("### 🗺️ Gebäudeübersicht (PDF-Plan)")
-        st.image("https://www.hs-kempten.de/fileadmin/user_upload/Bilder_Campus/Campus_Plan2023.jpg", use_container_width=True)
+        st.markdown("### 🗺️ Gebäudeübersicht (Lageplan 2024)")
+        st.image("https://www.hs-kempten.de/fileadmin/Bildpool/Lageplaene/Lageplan_Hochschule_Kempten_2024_DE.jpg", use_container_width=True)
         st.caption("Quelle: Hochschule Kempten")
 
-        st.download_button(
-            label="📥 Campus-Plan als PDF herunterladen",
-            data=requests.get("https://www.hs-kempten.de/fileadmin/user_upload/Bilder_Campus/Campus_Plan2023.pdf").content,
-            file_name="campus_plan_kempten.pdf"
-        )
+        # PDF-Download 2024
+        pdf_url = "https://www.hs-kempten.de/fileadmin/Bildpool/Lageplaene/Lageplan_Hochschule_Kempten_2024_DE.pdf"
+        try:
+            st.download_button(
+                label="📥 Lageplan 2024 als PDF herunterladen",
+                data=requests.get(pdf_url).content,
+                file_name="Lageplan_Hochschule_Kempten_2024.pdf",
+                mime="application/pdf"
+            )
+        except:
+            st.warning("⚠️ Lageplan konnte nicht geladen werden.")
 
 
     st.markdown("---")
