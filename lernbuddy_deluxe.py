@@ -341,14 +341,99 @@ elif menu == "🔎 Suche":
 
 # Hochschule
 elif menu == "🎓 Hochschule":
-    st.header("🎓 Hochschule Kempten")
-    show_lottie("https://assets10.lottiefiles.com/packages/lf20_3rwasyjy.json", 180)
-st.markdown("""
-**🔗 Wichtige Links:**
-- [🌐 Website](https://www.hs-kempten.de/)
-- [📚 Studiengänge](https://www.hs-kempten.de/studium/studienangebot)
-- [🍽️ Mensaplan](https://www.stw-swt.de/essen-trinken/speiseplaene/)
-- [📖 Bibliothek](https://www.hs-kempten.de/einrichtungen/bibliothek)
-- [💻 Moodle](https://moodle.hs-kempten.de/)
-- [🧾 MeinCampus](https://campus.hs-kempten.de/)
+    import pandas as pd
+    import folium
+    from streamlit_folium import folium_static
+
+    # --- Header & Animation ---
+    st.markdown(
+        """
+        <div style="display:flex; align-items:center; gap:1rem;">
+          <img src="https://www.hs-kempten.de/fileadmin/favicon/android-chrome-192x192.png"
+               style="width:60px; border-radius:12px;">
+          <h1 style="margin:0; font-size:2.2rem;">🎓 Hochschule Kempten</h1>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    show_lottie("https://assets10.lottiefiles.com/packages/lf20_3rwasyjy.json", height=200)
+
+    # --- Kennzahlen ---
+    col1, col2, col3 = st.columns(3)
+    col1.metric("📚 Studiengänge gesamt", "40+")
+    col2.metric("👩‍🎓 Studierende", "5.000+")
+    col3.metric("🏫 Fakultäten", "5")
+
+    # --- Tabs für Detail-Bereiche ---
+    tabs = st.tabs(["🔗 Links", "🍽️ Mensaplan", "📖 Bibliothek", "💻 Moodle", "🗺️ Campus-Karte"])
+
+    # 1) Wichtige Links in schicken Cards
+    with tabs[0]:
+        cards = [
+            ("🌐 Website", "https://www.hs-kempten.de/"),
+            ("📚 Studiengänge", "https://www.hs-kempten.de/studium/studienangebot"),
+            ("🍽️ Mensaplan",  "https://www.stw-swt.de/essen-trinken/speiseplaene/"),
+            ("📖 Bibliothek",  "https://www.hs-kempten.de/einrichtungen/bibliothek"),
+            ("💻 Moodle",      "https://moodle.hs-kempten.de/"),
+            ("🧾 MeinCampus",  "https://campus.hs-kempten.de/")
+        ]
+        cols = st.columns(3)
+        for i, (label, url) in enumerate(cards):
+            with cols[i % 3]:
+                st.markdown(f"""
+                <div style="
+                    border:1px solid #ddd; 
+                    border-radius:8px; 
+                    padding:1rem; 
+                    text-align:center;
+                    box-shadow:2px 2px 6px rgba(0,0,0,0.1);
+                    transition:transform .2s;
+                  "
+                  onmouseover="this.style.transform='scale(1.03)';"
+                  onmouseout="this.style.transform='scale(1)';"
+                >
+                  <h3 style="margin-bottom:0.5rem;">{label}</h3>
+                  <a href="{url}" target="_blank">{url}</a>
+                </div>
+                """, unsafe_allow_html=True)
+
+    # 2) Mensaplan anzeigen und filtern
+    with tabs[1]:
+        st.subheader("🍽️ Mensaplan der Woche")
+        df = pd.read_html("https://www.stw-swt.de/essen-trinken/speiseplaene/kempten")[0]
+        # Spalten sauber umbenennen (Beispiel)
+        df.columns = ["Wochentag","Mensa A","Mensa B","Bio-Mensa"]
+        st.dataframe(df.style.set_table_styles(
+            [{"selector":"th","props":[("background-color","#00CED1"),("color","white")]}]
+        ), height=300)
+
+    # 3) Bibliotheks-Infos im Expander
+    with tabs[2]:
+        exp = st.expander("📖 Öffnungszeiten & Services")
+        exp.markdown("""
+        - Mo–Fr: 08:00–20:00  
+        - Sa: 10:00–16:00  
+        - Buchkatalog: [online suchen](https://opac.hs-kempten.de)  
+        """)
+        st.button("PDF-Katalog herunterladen")
+
+    # 4) Moodle-Anmeldung simulieren
+    with tabs[3]:
+        st.subheader("💻 Moodle-Quicklink")
+        username = st.text_input("Benutzername")
+        password = st.text_input("Passwort", type="password")
+        if st.button("Login"):
+            st.success("🔒 Erfolgreich eingeloggt (Simuliert)")
+
+    # 5) Interaktive Campus-Karte
+    with tabs[4]:
+        st.subheader("🗺️ Campus-Karte")
+        m = folium.Map(location=[47.726, 10.312], zoom_start=16)
+        folium.Marker([47.726,10.312], tooltip="Hochschule Kempten").add_to(m)
+        folium_static(m)
+
+    # --- Footer ---
+    st.markdown("---")
+    st.info("Designed by dein Studi-Buddy 🚀")
+
 """)
