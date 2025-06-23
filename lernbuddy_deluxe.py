@@ -163,8 +163,8 @@ elif menu == "🧠 Lernplan":
                 for s in subjects
             )
             prompt = f"""
-Du bist ein Lerncoach und erstellst einen Lernplan für diese Fächer, Prüfungen und Hinweise.
-Erstelle einen 4-Wochen-Plan mit Uhrzeiten (z. B. 10:00–10:45), Pausen und maximal 4 Blöcken pro Tag.
+Du bist ein Lerncoach und erstellst einen Lernplan für diese Fächer, Prüfungen und individuellen Hinweise.
+Erstelle einen 4-Wochen-Plan mit Uhrzeiten (z. B. 10:00–10:45), Pausen und max. 4 Blöcken pro Tag.
 Beachte persönliche Wünsche und prüfe auf Überschneidungen.
 
 Fächer & Hinweise:
@@ -172,9 +172,9 @@ Fächer & Hinweise:
 
 Gib den Plan im Format aus:
 
-Montag, 01.07.2025  
-- 12:00–12:45: Mathe  
-- 14:00–14:45: BWL  
+Montag, 01.07.2025
+- 12:00–12:45: Mathe
+- 14:00–14:45: BWL
 """
             with st.spinner("GPT plant deinen Lernplan …"):
                 try:
@@ -189,7 +189,6 @@ Montag, 01.07.2025
 
                     # 4) Parser für verschiedene GPT-Formate
                     import re, pandas as pd
-
                     def parse_gpt_plan(text):
                         date_re = re.compile(r"^([A-Za-zäöüÄÖÜß]+)[, ]+\s*(\d{2}[./]\d{2}[./]\d{4})")
                         session_re = re.compile(
@@ -207,7 +206,7 @@ Montag, 01.07.2025
                             if dm:
                                 current = {
                                     "Wochentag": dm.group(1),
-                                    "Datum":     dm.group(2).replace(".", ".")
+                                    "Datum":     dm.group(2)
                                 }
                             elif sm and current:
                                 start, end, fach = sm.groups()
@@ -230,24 +229,26 @@ Montag, 01.07.2025
                         st.markdown("### 🧠 GPT-Plan (farbig):")
                         palette = ["#FFD700", "#00CED1", "#FF8C00", "#ADFF2F",
                                    "#DA70D6", "#FFA07A", "#7FFFD4", "#D2691E"]
-                        fachfarben = {
-                            f: palette[i % len(palette)]
-                            for i, f in enumerate(df_gpt["Fach"].unique())
-                        }
+                        fachfarben = {f: palette[i % len(palette)] for i, f in enumerate(df_gpt["Fach"].unique())}
 
                         for _, r in df_gpt.iterrows():
                             c = fachfarben.get(r["Fach"], "#EEE")
                             st.markdown(f"""
-                                <div style='background-color:{c};
-                                            padding:8px;
-                                            border-radius:6px;
-                                            margin-bottom:6px'>
+                                <div style='background-color:{c};padding:8px;border-radius:6px;margin-bottom:6px'>
                                   <strong>{r["Datum"]} ({r["Wochentag"]})</strong><br>
                                   {r["Startzeit"]}–{r["Endzeit"]}: <b>{r["Fach"]}</b>
                                 </div>
                             """, unsafe_allow_html=True)
 
-                        # 6) Lernzeit-Statistik
+                        # 6) 💡 Motivation & Tipps
+                        st.markdown("### 💡 Motivation & Tipps")
+                        st.markdown(
+                            "- Pausen stärken den Fokus (5 Min Dehnen oder Atmen)\n"
+                            "- Wiederholung ist King – kurz vorm Schlaf nochmal überfliegen\n"
+                            "- Schlaf & Bewegung helfen dem Gehirn, neues Wissen zu verankern"
+                        )
+
+                        # 7) Lernzeit-Statistik
                         df_stats = df_gpt.copy()
                         df_stats["Minuten"] = df_stats["Dauer"].str.extract(r"(\d+)").astype(int)
                         stats = df_stats.groupby("Fach").agg(
@@ -257,7 +258,7 @@ Montag, 01.07.2025
                         st.markdown("### 📊 Lernzeit-Statistik pro Fach")
                         st.dataframe(stats)
 
-                        # 7) Excel-Export mit Farbformatierung
+                        # 8) Excel-Export mit Farbformatierung
                         import openpyxl
                         from openpyxl.styles import Font, PatternFill
                         from openpyxl.utils.dataframe import dataframe_to_rows
@@ -265,7 +266,6 @@ Montag, 01.07.2025
                         def export_excel(df, stats_df, filename="lernplan.xlsx"):
                             wb = openpyxl.Workbook()
                             ws1 = wb.active; ws1.title = "Plan"
-                            # Plan-Daten
                             for i, row in enumerate(dataframe_to_rows(df, index=False, header=True), 1):
                                 ws1.append(row)
                                 for j, cell in enumerate(ws1[i], 1):
@@ -273,17 +273,13 @@ Montag, 01.07.2025
                                         cell.font = Font(bold=True)
                                     elif df.columns[j-1] == "Fach":
                                         col = fachfarben[cell.value].lstrip("#")
-                                        cell.fill = PatternFill(
-                                            start_color=col, end_color=col, fill_type="solid"
-                                        )
-                            # Statistik-Blatt
+                                        cell.fill = PatternFill(start_color=col, end_color=col, fill_type="solid")
                             ws2 = wb.create_sheet("Statistik")
                             for i, row in enumerate(dataframe_to_rows(stats_df, index=False, header=True), 1):
                                 ws2.append(row)
                                 if i == 1:
                                     for cell in ws2[i]:
                                         cell.font = Font(bold=True)
-                            # Spaltenbreiten anpassen
                             for ws in (ws1, ws2):
                                 for col in ws.columns:
                                     width = max(len(str(c.value)) for c in col) + 2
@@ -294,7 +290,7 @@ Montag, 01.07.2025
 
                         export_excel(df_gpt, stats)
 
-                        # 8) ICS-Kalender-Export
+                        # 9) ICS-Kalender-Export
                         from ics import Calendar, Event
                         import datetime as dt
 
