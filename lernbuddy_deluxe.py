@@ -406,26 +406,25 @@ elif menu == "🎓 Hochschule":
                 </div>
                 """, unsafe_allow_html=True)
 
-# Tab 2: Mensaplan
-with tabs[1]:
-    st.subheader("🍽️ Mensaplan der Woche")
+    # Tab 2: Mensaplan
+    with tabs[1]:
+        st.subheader("🍽️ Mensaplan der Woche")
 
-    pdf_url = "https://www.max-manager.de/daten-extern/augsburg/pdf/wochenplaene/hs-kempten/aktuell.pdf"
+        pdf_url = "https://www.max-manager.de/daten-extern/augsburg/pdf/wochenplaene/hs-kempten/aktuell.pdf"
 
-    try:
-        st.markdown(f"""
-        👉 Den aktuellen Mensaplan findest du hier als PDF:  
-        [📄 Jetzt anzeigen]({pdf_url})
-        """)
-        st.download_button(
-            label="📥 PDF herunterladen",
-            data=requests.get(pdf_url).content,
-            file_name="mensaplan_kempten.pdf",
-            mime="application/pdf"
-        )
-    except Exception as e:
-        st.error(f"❌ Fehler beim Laden des Mensaplan-PDFs: {e}")
-
+        try:
+            st.markdown(f"""
+            👉 Den aktuellen Mensaplan findest du hier als PDF:  
+            [📄 Jetzt anzeigen]({pdf_url})
+            """)
+            st.download_button(
+                label="📥 PDF herunterladen",
+                data=requests.get(pdf_url).content,
+                file_name="mensaplan_kempten.pdf",
+                mime="application/pdf"
+            )
+        except Exception as e:
+            st.error(f"❌ Fehler beim Laden des Mensaplan-PDFs: {e}")
 
     # Tab 3: Bibliothek
     with tabs[2]:
@@ -445,16 +444,14 @@ with tabs[1]:
         if st.button("Login"):
             st.success("🔒 Simulierter Login erfolgreich")
 
-  # Tab 5: Campus-Karte
-with tabs[4]:
-    st.subheader("🗺️ Campus-Karte")
+    # Tab 5: Campus-Karte
+    with tabs[4]:
+        st.subheader("🗺️ Campus-Karte")
 
-    hs_lat = 47.72562
-    hs_lon = 10.31459
-    df_map = pd.DataFrame({"lat": [hs_lat], "lon": [hs_lon]})
-
-    st.map(df_map, zoom=17)  # Zoom 17 = sehr nah, ideal für Campus
-
+        hs_lat = 47.72562
+        hs_lon = 10.31459
+        df_map = pd.DataFrame({"lat": [hs_lat], "lon": [hs_lon]})
+        st.map(df_map, zoom=17)
 
     st.markdown("---")
     st.info("🌟 Designed by dein Studi-Buddy 🚀")
