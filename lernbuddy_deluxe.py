@@ -53,21 +53,48 @@ with st.sidebar:
 if menu == "🏠 Start":
     st.title("🎓 Willkommen bei Lernbuddy Deluxe 👋")
     show_lottie("https://assets2.lottiefiles.com/packages/lf20_myejiggj.json")
-    st.markdown("""
-**Lernbuddy Deluxe** ist dein persönlicher Studien-Coach und smarter Lernpartner! 🚀📚  
-Erstelle Lernpläne, stelle Fragen im Chat, informiere dich über die Hochschule Kempten.
+st.markdown("""
+
+**Lernbuddy Deluxe** ist **mehr als nur ein Chatbot** – er ist dein persönlicher Studien-Coach, digitaler Lernpartner und smarter Assistent, der dich durch das gesamte Semester begleitet! 🚀📚
 
 ---
 
 ## 💡 Was Lernbuddy Deluxe für dich tun kann:
 
-- 💬 GPT-Chat – Dein KI-Tutor für Fragen & Erklärungen
-- 🧠 Lernplan-Generator mit Zeitblöcken & Pausen
-- 🔎 Intelligente Suche im Lernplan
-- 🎨 Darkmode & Farben nach deinem Stil
-- 🎓 Hochschule-Kempten-Panel mit nützlichen Links
+### 💬 GPT-Chat – Dein KI-Tutor  
+Stelle Fragen rund ums Studium – oder auch zum Leben. Ob:  
+- ✅ Lernhilfe & Verständnisfragen  
+- ✅ Zusammenfassungen & Erklärungen  
+- ✅ Studienorganisation oder Alltagssorgen  
+**Der GPT-Tutor ist für dich da!**
 
-> Entwickelt mit ❤️ von Studierenden – powered by Streamlit & OpenAI GPT-4.
+### 🧠 Automatischer Lernplan-Generator  
+- Du trägst deine Fächer, Prüfungen & Schwierigkeitsgrad ein  
+- Der Bot erstellt dir automatisch einen effizienten Lernplan – taggenau mit Zeitvorgaben  
+- **Exportiere den Plan als PDF oder .ics-Kalenderdatei**
+
+### 🔎 Intelligente Suchfunktion  
+Finde blitzschnell Inhalte und Fächer im Lernplan wieder – perfekt zum Wiederholen!
+
+### 🎨 Farben & Darkmode  
+Wähle deinen Style:  
+- 🌗 Darkmode  
+- 🎨 5 moderne Farbpaletten  
+- Inspiriert vom Design der **Hochschule Kempten**
+
+### 🎓 Hochschul-Panel  
+Direkte Links zu:  
+- 📚 Studiengänge  
+- 🍽️ Mensaplan  
+- 💻 Moodle  
+- 📖 Bibliothek  
+- 🧾 MeinCampus  
+
+---
+
+## ✨ Entwickelt für Studierende – von Studierenden  
+> Mit ❤️ von **Taner Altin** & **Shefki Kuleta**  
+> Powered by **Streamlit** & **OpenAI GPT-4**
 """)
 
 # GPT-Chat
