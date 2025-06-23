@@ -53,7 +53,7 @@ with st.sidebar:
 if menu == "🏠 Start":
     st.title("🎓 Willkommen bei Lernbuddy Deluxe 👋")
     show_lottie("https://assets2.lottiefiles.com/packages/lf20_myejiggj.json")
-st.markdown("""
+    st.markdown("""
 
 **Lernbuddy Deluxe** ist **mehr als nur ein Chatbot** – er ist dein persönlicher Studien-Coach, digitaler Lernpartner und smarter Assistent, der dich durch das gesamte Semester begleitet! 🚀📚
 
@@ -129,9 +129,9 @@ elif menu == "💬 GPT-Chat":
         </div>
         """, unsafe_allow_html=True)
 
-# Lernplan mit Uhrzeiten & Excel
+# Lernplan
 elif menu == "🧠 Lernplan":
-    st.header("🧠 Lernplan mit Uhrzeiten & Pausen")
+    st.header("🧠 Lernplan mit Uhrzeiten, Pausen & GPT-Hinweisen")
     n = st.number_input("Wie viele Prüfungen hast du?", 1, 10)
     subjects = []
 
@@ -140,6 +140,9 @@ elif menu == "🧠 Lernplan":
         date = st.date_input(f"📅 Prüfung {i+1}", key=f"date_{i}")
         diff = st.slider("📊 Schwierigkeit (1–10)", 1, 10, key=f"diff_{i}")
         subjects.append((name, date, diff))
+
+    hinweise = st.text_area("📝 Besondere Wünsche an GPT (optional)", 
+        placeholder="Z. B.: Sonntag frei. Mathe doppelt so oft. Informatik nur vormittags...")
 
     def generate_learning_schedule(subjects, start_hour=9, end_hour=18, session_minutes=45, break_minutes=15):
         schedule = []
@@ -174,9 +177,27 @@ elif menu == "🧠 Lernplan":
 
         return pd.DataFrame(schedule)
 
-    if st.button("✅ Lernplan erstellen"):
+    if st.button("✅ Lernplan mit GPT-Hinweisen erstellen"):
+        prompt = f"""
+        Du bist ein KI-Planer für Lernpläne. Erstelle eine Aufteilung mit Uhrzeiten und Pausen für folgende Prüfungen:
+
+        {subjects}
+
+        Berücksichtige folgende Wünsche:
+        {hinweise}
+        """
+        try:
+            gpt_response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[{"role": "user", "content": prompt}]
+            )
+            st.markdown("🤖 **GPT-Vorschlag:**")
+            st.markdown(gpt_response.choices[0].message.content)
+        except Exception as e:
+            st.error(f"Fehler bei GPT-Aufruf: {e}")
+
         df = generate_learning_schedule(subjects)
-        st.success("✅ Lernplan wurde erstellt!")
+        st.success("✅ Zeitbasierter Lernplan lokal erstellt:")
         st.dataframe(df)
         df.to_excel("lernplan.xlsx", index=False)
         with open("lernplan.xlsx", "rb") as f:
@@ -202,12 +223,10 @@ elif menu == "🎓 Hochschule":
     st.header("🎓 Hochschule Kempten")
     show_lottie("https://assets10.lottiefiles.com/packages/lf20_3rwasyjy.json", 180)
     st.markdown("""
-**🔗 Links zur Hochschule Kempten:**
-
+**🔗 Wichtige Links:**
 - [🌐 Website](https://www.hs-kempten.de/)
 - [📚 Studiengänge](https://www.hs-kempten.de/studium/studienangebot)
 - [🍽️ Mensaplan](https://www.stw-swt.de/essen-trinken/speiseplaene/)
 - [📖 Bibliothek](https://www.hs-kempten.de/einrichtungen/bibliothek)
 - [💻 Moodle](https://moodle.hs-kempten.de/)
-- [🧾 MeinCampus](https://campus.hs-kempten.de/)
-""")
+- [🧾 MeinCampus](
