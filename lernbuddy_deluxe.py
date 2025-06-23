@@ -460,7 +460,7 @@ elif menu == "🎓 Hochschule":
 
         st.markdown("---")
         st.markdown("### 🗺️ Gebäudeübersicht (PDF-Plan)")
-        st.image("https://www.hs-kempten.de/fileadmin/user_upload/Bilder_Campus/Campus_Plan2023.jpg", use_column_width=True)
+        st.image("https://www.hs-kempten.de/fileadmin/user_upload/Bilder_Campus/Campus_Plan2023.jpg", use_container_width=True)
         st.caption("Quelle: Hochschule Kempten")
 
         st.download_button(
