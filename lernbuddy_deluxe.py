@@ -134,11 +134,12 @@ elif menu == "🧠 Lernplan":
     st.header("🧠 Lernplan mit GPT-Hinweisen, Farben, Excel- & Kalender-Export + Statistik")
 
     # 1) Eingabe: Fächer, Prüfungstermine, Schwierigkeit, GPT-Hinweise
+    start_date = st.date_input("📆 Startdatum des Lernplans", datetime.date.today())
     n = st.number_input("Wie viele Prüfungen hast du?", 1, 10)
     subjects = []
     for i in range(int(n)):
         name = st.text_input(f"📘 Fach {i+1}", key=f"subj_{i}")
-        date = st.date_input(f"📅 Prüfung {i+1}", key=f"date_{i}")
+        date_input = st.date_input(f"📅 Prüfung {i+1}", key=f"date_{i}")
         diff = st.slider("📊 Schwierigkeit (1–10)", 1, 10, key=f"diff_{i}")
         hint = st.text_area(
             f"🧠 Hinweis für GPT zu '{name or 'Fach'}'",
@@ -148,7 +149,7 @@ elif menu == "🧠 Lernplan":
         if name.strip():
             subjects.append({
                 "name":       name.strip(),
-                "exam_date":  str(date),
+                "exam_date":  str(date_input),
                 "difficulty": diff,
                 "hint":       hint.strip() or "keine"
             })
@@ -162,9 +163,11 @@ elif menu == "🧠 Lernplan":
                 f"- {s['name']} (Prüfung: {s['exam_date']}, Schwierigkeit: {s['difficulty']}) – Hinweis: {s['hint']}"
                 for s in subjects
             )
-            prompt = f"""
+            prompt = f""" 
 Du bist ein Lerncoach und erstellst einen Lernplan für diese Fächer, Prüfungen und individuellen Hinweise.
-Erstelle einen 4-Wochen-Plan mit Uhrzeiten (z. B. 10:00–10:45), Pausen und max. 4 Blöcken pro Tag.
+Der Plan startet ab dem {{start_date}}.
+
+Erstelle einen 4-Wochen-Plan mit Uhrzeiten (z. B. 10:00–10:45), Pausen und max. 4 Blöcken pro Tag.
 Beachte persönliche Wünsche und prüfe auf Überschneidungen.
 
 Fächer & Hinweise:
