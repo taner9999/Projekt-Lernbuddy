@@ -7,3 +7,4 @@ fpdf
 ics
 openai
 lxml
+html5lib
