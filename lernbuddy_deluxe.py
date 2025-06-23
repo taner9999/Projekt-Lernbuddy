@@ -184,8 +184,8 @@ Montag, 01.07.2025
                     st.markdown("### 📅 Vorschlag von GPT:")
                     st.markdown(result)
 
-                    # 📑 Parser
                     import re
+
                     def parse_gpt_plan(plan_text):
                         data = []
                         current_day = None
@@ -218,7 +218,6 @@ Montag, 01.07.2025
                     if df_gpt.empty:
                         st.warning("⚠️ GPT-Plan konnte nicht in eine Tabelle umgewandelt werden.")
                     else:
-                        # 🎨 Farbzuordnung pro Fach
                         st.markdown("### 🧠 GPT-Plan als Tabelle mit Farben:")
                         fachfarben = {}
                         farben = ["#FFD700", "#00CED1", "#FF8C00", "#ADFF2F", "#DA70D6", "#FFA07A", "#7FFFD4", "#D2691E"]
@@ -234,7 +233,7 @@ Montag, 01.07.2025
                             </div>
                             """, unsafe_allow_html=True)
 
-                        # 📥 Excel-Export
+                        # Excel-Export
                         import openpyxl
                         from openpyxl.styles import Font, PatternFill
                         from openpyxl.utils.dataframe import dataframe_to_rows
@@ -243,7 +242,6 @@ Montag, 01.07.2025
                             wb = openpyxl.Workbook()
                             ws = wb.active
                             ws.title = "GPT-Lernplan"
-
                             for r_idx, row in enumerate(dataframe_to_rows(df, index=False, header=True), 1):
                                 ws.append(row)
                                 for c_idx, cell in enumerate(ws[r_idx], 1):
@@ -253,18 +251,16 @@ Montag, 01.07.2025
                                         fach = cell.value
                                         farbe = fachfarben.get(fach, "#FFFFFF").replace("#", "")
                                         cell.fill = PatternFill(start_color=farbe, end_color=farbe, fill_type="solid")
-
                             for col in ws.columns:
                                 max_len = max(len(str(c.value)) if c.value else 0 for c in col)
                                 ws.column_dimensions[col[0].column_letter].width = max_len + 2
-
                             wb.save(filename)
                             with open(filename, "rb") as f:
                                 st.download_button("📥 GPT-Plan als Excel herunterladen", f, file_name=filename)
 
                         export_excel_formatted(df_gpt)
 
-                        # 📆 ICS-Kalenderexport
+                        # Kalender-Export
                         from ics import Calendar, Event
 
                         def export_ics_calendar(df, filename="gpt_plan.ics"):
@@ -276,7 +272,6 @@ Montag, 01.07.2025
                                     end_time = datetime.datetime.strptime(row["Endzeit"], "%H:%M").time()
                                     start_dt = datetime.datetime.combine(datum, start_time)
                                     end_dt = datetime.datetime.combine(datum, end_time)
-
                                     event = Event()
                                     event.name = f"{row['Fach']} – Lernen"
                                     event.begin = start_dt
@@ -285,10 +280,8 @@ Montag, 01.07.2025
                                     cal.events.add(event)
                                 except Exception as e:
                                     st.warning(f"Fehler beim Kalender-Eintrag: {e}")
-
                             with open(filename, "w", encoding="utf-8") as f:
                                 f.writelines(cal)
-
                             with open(filename, "rb") as f:
                                 st.download_button("📆 GPT-Plan als Kalender (.ics)", f, file_name=filename, mime="text/calendar")
 
