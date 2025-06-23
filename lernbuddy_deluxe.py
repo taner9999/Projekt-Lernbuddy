@@ -1,1 +1,1 @@
-
+# Lernbuddy Deluxe Python Code – wird separat ergänzt.
