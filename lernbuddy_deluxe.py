@@ -131,9 +131,9 @@ elif menu == "💬 GPT-Chat":
 
 # Lernplan
 elif menu == "🧠 Lernplan":
-    st.header("🧠 Lernplan mit GPT-Hinweisen, Farben, Excel- & Kalender-Export + Statistik")
+    st.header("🧠 Lernplan mit GPT-Hinweisen, Debugging & Export-Funktionen")
 
-    # 1) Nutzereingaben: Fächer, Prüfungsdaten, Schwierigkeit, GPT-Hinweise
+    # 1) Nutzereingaben: Fächer, Prüfungstermine, Schwierigkeit, individuelle Hinweise
     n = st.number_input("Wie viele Prüfungen hast du?", 1, 10)
     subjects = []
     for i in range(int(n)):
@@ -141,19 +141,19 @@ elif menu == "🧠 Lernplan":
         date = st.date_input(f"📅 Prüfung {i+1}", key=f"date_{i}")
         diff = st.slider("📊 Schwierigkeit (1–10)", 1, 10, key=f"diff_{i}")
         hint = st.text_area(
-            f"🧠 Hinweis für GPT zu '{name or 'Fach'}'",
-            key=f"hint_{i}",
+            f"🧠 Hinweis für GPT zu '{name or 'Fach'}'", 
+            key=f"hint_{i}", 
             placeholder="z. B.: nur ab 12 Uhr, nicht sonntags …"
         )
         if name.strip():
             subjects.append({
-                "name": name.strip(),
-                "exam_date": str(date),
+                "name":       name.strip(),
+                "exam_date":  str(date),
                 "difficulty": diff,
-                "hint": hint.strip() or "keine"
+                "hint":       hint.strip() or "keine"
             })
 
-    # 2) Button zum GPT-Planerzeugen
+    # 2) Button für GPT-Plan
     if st.button("✅ GPT-Lernplan generieren"):
         if not subjects:
             st.warning("⚠️ Bitte gib mindestens ein Fach ein.")
@@ -163,14 +163,15 @@ elif menu == "🧠 Lernplan":
                 for s in subjects
             )
             prompt = f"""
-Du bist ein Lerncoach und erstellst einen Lernplan für die folgenden Fächer, Prüfungen und individuellen Hinweise.
-Erstelle einen 4-Wochen-Plan mit Uhrzeiten (z. B. 10:00–10:45), Pausen und maximal 4 Blöcken pro Tag. 
+Du bist ein Lerncoach und erstellst einen Lernplan für diese Fächer, Prüfungen und Hinweise.
+Erstelle einen 4-Wochen-Plan mit Uhrzeiten (z. B. 10:00–10:45), Pausen, max. 4 Blöcken/Tag.
 Beachte persönliche Wünsche und prüfe auf Überschneidungen.
 
 Fächer & Hinweise:
 {fachliste}
 
 Gib den Plan im Format aus:
+
 Montag, 01.07.2025
 - 12:00–12:45: Mathe
 - 14:00–14:45: BWL
@@ -180,44 +181,41 @@ Montag, 01.07.2025
                     # 3) GPT-Aufruf
                     response = client.chat.completions.create(
                         model="gpt-4",
-                        messages=[{"role": "user", "content": prompt}]
+                        messages=[{"role":"user","content":prompt}]
                     )
                     result = response.choices[0].message.content
-                    st.markdown("### 📅 Vorschlag von GPT:")
-                    st.markdown(result)
 
-                    import re
-                    import pandas as pd
+                    # 4) Debug: Raw-Output anzeigen
+                    st.text_area("📋 Rohplan von GPT", result, height=200)
+                    st.write("🔍 Zeilen im Rohplan:", result.splitlines())
 
-                    # 4) Robuster Parser für GPT-Ausgaben
+                    # 5) Superrobuster Parser
+                    import re, pandas as pd
                     def parse_gpt_plan(text):
-                        date_pat = re.compile(r"^([A-Za-zäöüÄÖÜß]+),\s*(\d{2}[./]\d{2}[./]\d{4})")
-                        sess_pat = re.compile(
-                            r"(?P<start>\d{2}[:\.]\d{2})\s*(–|-|bis)\s*"
-                            r"(?P<end>\d{2}[:\.]\d{2})\s*[:\-–]?\s*(?P<fach>.+)",
+                        date_re = re.compile(r"^([A-Za-zäöüÄÖÜß]+)[, ]+\s*(\d{2}[./]\d{2}[./]\d{4})")
+                        session_re = re.compile(
+                            r"-?\s*(\d{2}[:\.]\d{2})\s*(?:–|-|bis)\s*(\d{2}[:\.]\d{2})\s*[:\-–]?\s*(.+)",
                             re.IGNORECASE
                         )
                         rows = []
                         current = {}
-                        for line in text.splitlines():
-                            l = line.strip()
-                            if not l or "pause" in l.lower():
+                        for raw in text.splitlines():
+                            line = raw.strip()
+                            if not line or "pause" in line.lower():
                                 continue
-                            dm = date_pat.match(l)
-                            sm = sess_pat.match(l)
+                            dm = date_re.match(line)
+                            sm = session_re.match(line)
                             if dm:
                                 current = {"Wochentag": dm.group(1), "Datum": dm.group(2).replace(".", ".")}
                             elif sm and current:
-                                start = sm.group("start").replace(".", ":")
-                                end   = sm.group("end").replace(".", ":")
-                                fach  = sm.group("fach").strip()
+                                start, end, fach = sm.groups()
                                 rows.append({
                                     "Wochentag": current["Wochentag"],
-                                    "Datum":    current["Datum"],
-                                    "Fach":     fach,
-                                    "Startzeit": start,
-                                    "Endzeit":   end,
-                                    "Dauer":    "45 Min"
+                                    "Datum":     current["Datum"],
+                                    "Fach":      fach.strip(),
+                                    "Startzeit": start.replace(".", ":"),
+                                    "Endzeit":   end.replace(".", ":"),
+                                    "Dauer":     "45 Min"
                                 })
                         return pd.DataFrame(rows)
 
@@ -226,10 +224,10 @@ Montag, 01.07.2025
                     if df_gpt.empty:
                         st.warning("⚠️ GPT-Plan konnte nicht in eine Tabelle umgewandelt werden.")
                     else:
-                        # 5) Farben definieren & Anzeige in Streamlit
-                        st.markdown("### 🧠 GPT-Plan als farbige Übersicht")
-                        farbpalette = ["#FFD700", "#00CED1", "#FF8C00", "#ADFF2F", "#DA70D6", "#FFA07A", "#7FFFD4", "#D2691E"]
-                        fachfarben = {f: farbpalette[i % len(farbpalette)] for i, f in enumerate(df_gpt["Fach"].unique())}
+                        # 6) Farbige Übersicht in Streamlit
+                        st.markdown("### 🧠 GPT-Plan (farbig):")
+                        palette = ["#FFD700","#00CED1","#FF8C00","#ADFF2F","#DA70D6","#FFA07A","#7FFFD4","#D2691E"]
+                        fachfarben = {f: palette[i%len(palette)] for i,f in enumerate(df_gpt["Fach"].unique())}
 
                         for _, r in df_gpt.iterrows():
                             c = fachfarben.get(r["Fach"], "#EEE")
@@ -240,74 +238,66 @@ Montag, 01.07.2025
                                 </div>
                             """, unsafe_allow_html=True)
 
-                        # 6) Lernzeit-Statistik
+                        # 7) Lernzeit-Statistik
                         df_stats = df_gpt.copy()
                         df_stats["Minuten"] = df_stats["Dauer"].str.extract(r"(\d+)").astype(int)
                         stats = df_stats.groupby("Fach").agg(
-                            Sessions=("Fach", "count"),
-                            Total_Minuten=("Minuten", "sum")
+                            Sessions=("Fach","count"),
+                            Total_Minuten=("Minuten","sum")
                         ).reset_index()
                         st.markdown("### 📊 Lernzeit-Statistik pro Fach")
                         st.dataframe(stats)
 
-                        # 7) Excel-Export mit Farben
+                        # 8) Excel-Export mit Farben
                         import openpyxl
                         from openpyxl.styles import Font, PatternFill
                         from openpyxl.utils.dataframe import dataframe_to_rows
-
-                        def export_excel_formatted(df, stats_df, filename="lernplan.xlsx"):
+                        def export_excel(df, stats_df, filename="lernplan.xlsx"):
                             wb = openpyxl.Workbook()
-                            ws1 = wb.active
-                            ws1.title = "Plan"
-                            for i, row in enumerate(dataframe_to_rows(df, index=False, header=True), 1):
+                            ws1 = wb.active; ws1.title = "Plan"
+                            for i,row in enumerate(dataframe_to_rows(df, index=False, header=True),1):
                                 ws1.append(row)
-                                for j, cell in enumerate(ws1[i], 1):
-                                    if i == 1:
+                                for j,cell in enumerate(ws1[i],1):
+                                    if i==1:
                                         cell.font = Font(bold=True)
-                                    elif df.columns[j-1] == "Fach":
-                                        col = fachfarben.get(cell.value, "#FFFFFF").lstrip("#")
-                                        cell.fill = PatternFill(start_color=col, end_color=col, fill_type="solid")
-                            # Statistikblatt
+                                    elif df.columns[j-1]=="Fach":
+                                        col = fachfarben[cell.value].lstrip("#")
+                                        cell.fill = PatternFill(start_color=col,end_color=col,fill_type="solid")
                             ws2 = wb.create_sheet("Statistik")
-                            for i, row in enumerate(dataframe_to_rows(stats_df, index=False, header=True), 1):
+                            for i,row in enumerate(dataframe_to_rows(stats_df, index=False, header=True),1):
                                 ws2.append(row)
-                                if i == 1:
+                                if i==1:
                                     for cell in ws2[i]:
                                         cell.font = Font(bold=True)
-                            # Spaltenbreiten anpassen
-                            for ws in [ws1, ws2]:
+                            for ws in (ws1,ws2):
                                 for col in ws.columns:
-                                    w = max(len(str(c.value)) for c in col) + 2
-                                    ws.column_dimensions[col[0].column_letter].width = w
+                                    w=max(len(str(c.value)) for c in col)+2
+                                    ws.column_dimensions[col[0].column_letter].width=w
                             wb.save(filename)
-                            with open(filename, "rb") as f:
+                            with open(filename,"rb") as f:
                                 st.download_button("📥 Excel herunterladen", f, file_name=filename)
+                        export_excel(df_gpt, stats)
 
-                        export_excel_formatted(df_gpt, stats)
-
-                        # 8) ICS-Kalenderexport
+                        # 9) Kalender-Export (.ics)
                         from ics import Calendar, Event
                         import datetime as dt
-
-                        def export_ics_calendar(df, filename="lernplan.ics"):
+                        def export_ics(df, filename="lernplan.ics"):
                             cal = Calendar()
-                            for _, r in df.iterrows():
-                                d = dt.datetime.strptime(r["Datum"], "%d.%m.%Y").date()
-                                stime = dt.datetime.strptime(r["Startzeit"], "%H:%M").time()
-                                etime = dt.datetime.strptime(r["Endzeit"], "%H:%M").time()
+                            for _,r in df.iterrows():
+                                d = dt.datetime.strptime(r["Datum"],"%d.%m.%Y").date()
+                                stime = dt.datetime.strptime(r["Startzeit"],"%H:%M").time()
+                                etime = dt.datetime.strptime(r["Endzeit"],"%H:%M").time()
                                 ev = Event()
-                                ev.name = f"{r['Fach']} – Lernen"
-                                ev.begin = dt.datetime.combine(d, stime)
-                                ev.end   = dt.datetime.combine(d, etime)
+                                ev.name        = f"{r['Fach']} – Lernen"
+                                ev.begin       = dt.datetime.combine(d,stime)
+                                ev.end         = dt.datetime.combine(d,etime)
                                 ev.description = f"{r['Fach']} am {r['Datum']} ({r['Wochentag']})"
                                 cal.events.add(ev)
-                            with open(filename, "w", encoding="utf-8") as f:
+                            with open(filename,"w",encoding="utf-8") as f:
                                 f.writelines(cal)
-                            with open(filename, "rb") as f:
-                                st.download_button("📆 ICS herunterladen", f, file_name=filename,
-                                                   mime="text/calendar")
-
-                        export_ics_calendar(df_gpt)
+                            with open(filename,"rb") as f:
+                                st.download_button("📆 ICS herunterladen", f, file_name=filename, mime="text/calendar")
+                        export_ics(df_gpt)
 
                 except Exception as e:
                     st.error(f"Fehler beim GPT-Aufruf: {e}")
