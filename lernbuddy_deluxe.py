@@ -82,14 +82,6 @@ Wähle deinen Style:
 - 🎨 5 moderne Farbpaletten  
 - Inspiriert vom Design der **Hochschule Kempten**
 
-### 🎓 Hochschul-Panel  
-Direkte Links zu:  
-- 📚 Studiengänge  
-- 🍽️ Mensaplan  
-- 💻 Moodle  
-- 📖 Bibliothek  
-- 🧾 MeinCampus  
-
 ---
 
 ## ✨ Entwickelt für Studierende – von Studierenden  
